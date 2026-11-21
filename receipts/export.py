@@ -119,6 +119,33 @@ def _script_json(data: dict) -> str:
     return text.replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
 
 
+def _og_block(board: dict, title: str) -> str:
+    """Open Graph tags so a shared link previews as the board, not a blank page."""
+    from html import escape as esc
+
+    coverage = board.get("coverage") or {}
+    quotes = len(board.get("quotes") or [])
+    sources = len(board.get("sources") or [])
+    pages_ok = coverage.get("pages_ok", 0)
+    pages_failed = coverage.get("pages_failed", 0)
+    description = (
+        f"{quotes} quotes from {sources} sources, {pages_ok} pages fetched and "
+        f"{pages_failed} blocked. Every sentence carries its URL, its date and the "
+        f"query that found it. No model was used."
+    )
+    image = "https://shattradingle.github.io/receipts/screenshots/desk-light.png"
+    return (
+        f'<meta property="og:type" content="article">\n'
+        f'<meta property="og:title" content="{esc(title)}">\n'
+        f'<meta property="og:description" content="{esc(description)}">\n'
+        f'<meta property="og:url" content="https://shattradingle.github.io/receipts/">\n'
+        f'<meta property="og:image" content="{image}">\n'
+        f'<meta name="twitter:card" content="summary_large_image">\n'
+        f'<meta name="twitter:title" content="{esc(title)}">\n'
+        f'<meta name="twitter:description" content="{esc(description)}">\n'
+    )
+
+
 def board_html(board: dict) -> str:
     """One file, opened straight from disk: inline CSS, inline JS, embedded board."""
     import re
@@ -140,6 +167,8 @@ def board_html(board: dict) -> str:
     html = html.replace("<body>", '<body class="static-board">', 1)
     html = re.sub(r"<title>.*?</title>", f"<title>{escape(title)}</title>", html,
                   count=1, flags=re.S)
+    og = _og_block(board, title)
+    html = html.replace("</head>", og + "</head>", 1)
     return html
 
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.3 — 2026-11-21
+
+- **The static export now carries Open Graph tags.** A shared link previews as the board:
+  title, the coverage line (quotes, sources, pages fetched, pages blocked) and the desk
+  screenshot, instead of a blank card.
+
 ## 1.0.2 — 2026-11-21
 
 - **A stronger baked demo.** The demo board is now a real five-source run

@@ -86,6 +86,14 @@ def test_html_export_is_self_contained(board):
     assert "function renderBoard" in html
 
 
+def test_html_export_has_open_graph_tags(board):
+    html = board_html(board)
+    assert '<meta property="og:title" content="receipts · why do AI coding agents waste context window">' in html
+    assert '<meta property="og:image" content="https://shattradingle.github.io/receipts/screenshots/desk-light.png">' in html
+    assert '<meta name="twitter:card" content="summary_large_image">' in html
+    assert "quotes from" in html and "blocked" in html
+
+
 def test_html_export_escapes_script_close(board):
     board = json.loads(json.dumps(board))
     board["quotes"][0]["text"] = "A quote that tries </script><script>alert(1)</script> to break out."

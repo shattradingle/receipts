@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "receipts"
-version = "1.0.2"
+version = "1.0.3"
 description = "A research desk that cannot hallucinate: verbatim quotes with receipts"
 readme = "README.md"
 license = {text = "MIT"}
