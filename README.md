@@ -63,9 +63,9 @@ Ctrl-C to stop.
 
 If port 8788 is taken, add `--port 8790`.
 
-![The receipts desk showing 25 quotes, 12 sources, one blocked Forbes page and the themes column](docs/screenshots/desk-light.png)
+![The receipts desk showing 33 quotes, 16 sources, one blocked Forbes page and the themes column](docs/screenshots/desk-light.png)
 
-The demo board is a real run from 2026-11-21: 25 quotes, 11 pages ok, one blocked page, 9 queries, 8.8 seconds. The blocked Forbes page is in Coverage with its 403. Nothing on that board was written for it. The layout stacks below 900px ([mobile view](docs/screenshots/desk-mobile.png)), and `?theme=dark` or `?theme=light` overrides the system theme.
+The demo board is a real run from 2026-11-21: 33 quotes, 15 pages ok, one blocked page, 15 queries, 8.2 seconds, five source kinds. The blocked Forbes page is in Coverage with its 403. Nothing on that board was written for it. The layout stacks below 900px ([mobile view](docs/screenshots/desk-mobile.png)), and `?theme=dark` or `?theme=light` overrides the system theme.
 
 To make the same kind of static file, with no server at all (take the id from `receipts list`):
 
@@ -151,14 +151,14 @@ The full pipeline, source decisions and measured live outcomes are in [docs/arch
 
 Measured on 2026-11-21 from one Linux machine through a logging proxy. These are the things that break, not a roadmap.
 
-| source | live result on 2026-11-21 | in the demo |
+| source | live result on 2026-11-21 (final demo run) | in the demo |
 | --- | --- | --- |
-| web | Bing answered 200 but wrapped every organic link in its `/ck/a?u=a1…` redirect; the adapter decodes it, so pages are real sites. Relevance is still weak: on 2026-11-21, 3 of 8 pages produced no quotable sentence and the rest produced 3 quotes. Mojeek returned 403. | no |
-| news | 15 quotes from 6 pages, 2 blocked with 403. Google News links are JavaScript redirects, so the Bing News RSS fallback supplied the fetchable URLs. | yes |
-| hn | 18 quotes from 12 pages at depth 1. | yes |
-| wiki | Works, but drifts on a specific question (Omarchy, Chemotherapy, GLM). Left out of the demo. | no |
-| arxiv | 18 quotes from 6 abstracts. PDFs are not read. | yes |
-| reddit | Not called live from the build shell because the local research rail forbids raw archive calls. Fixture-tested only. The archive throttles after a few requests. | no |
+| web | Bing answered 200. Every organic link is a `/ck/a?u=a1…` redirect, which the adapter decodes; it produced **4 pages, 11 quotes**. Relevance is still the weakest of the five: the same query on an earlier run gave generic results, and Mojeek returned 403. | yes |
+| news | **3 pages (2 ok, 1 blocked), 6 quotes**. The blocked Forbes page is in Coverage with its 403. Google News links are JavaScript redirects, so the Bing News RSS fallback supplies the publisher URLs. | yes |
+| hn | **3 pages, 4 quotes**. | yes |
+| wiki | **3 pages, 4 quotes**. It drifts on a very specific question (Omarchy, Chemotherapy, GLM). | yes |
+| arxiv | **3 abstracts, 8 quotes**. PDFs are not read. | yes |
+| reddit | Not in the baked board: a 12-sub fan-out hits the archive's throttle, and the build shell's research rail forbids raw archive calls. The adapter is fixture-tested and best effort. | no |
 
 More limits:
 
@@ -167,7 +167,7 @@ More limits:
 - **Reddit is best effort.** arctic-shift allows a keyword query only when scoped to a subreddit, so one search is 12 scoped requests and some will be blocked. Expect `blocked` rows on a busy day.
 - **Quotes are 20 to 45 words.** A page of brilliant six-word sentences contributes nothing. That is the price of a rule you can check.
 - **No relevance model.** Page selection ranks by question-term hits and sources round-robin; it does not understand the question. An off-topic page can still be fetched. It is listed as a source, not hidden.
-- **The demo is three sources, not six.** It uses `news,hn,arxiv`, the three that produced usable quotes in the measured run. The spec asked for all sources; this is the honest subset, and the reason is the table above.
+- **The demo is five sources, not six.** It uses `web,news,hn,wiki,arxiv` at depth 2: every source that answered from a normal connection produced at least four quotes. Reddit is the sixth adapter and is not in the baked board, because the archive throttles a 12-sub fan-out; the adapter is fixture-tested and listed as best effort above.
 - **Not a synthesis tool.** If you want an answer written for you, this is the wrong tool. It gives you the material to write one.
 - **The web changes.** Determinism is over the fetched pages. The same question tomorrow can return a different board.
 - **Local state only.** No account, no sync, no cloud. `RECEIPTS_HOME` moves the database and exports.

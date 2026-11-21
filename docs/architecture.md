@@ -119,8 +119,8 @@ sources marked below.
 | `arxiv` | 12 hits, 6 pages ok, 18 quotes. Abstracts only. | yes |
 | `reddit` | not called live from the build shell because the local research rail forbids raw archive calls. The adapter is fixture-tested: 2 posts, 2 comments, deleted comments skipped, fetch builds a page from archive comments. | no |
 
-The baked demo board is a real run of `news,hn,arxiv` at depth 2: 9 queries, 66
-hits, 11 pages ok, 1 blocked page, 25 quotes, 8.8 s. Its one failure is the
+The baked demo board is a real run of `web,news,hn,wiki,arxiv` at depth 2: 15 queries,
+96 hits, 15 pages ok, 1 blocked page, 33 quotes, 8.2 s. Its one failure is the
 Forbes 403, kept in the board on purpose.
 
 ## No model, no keys
