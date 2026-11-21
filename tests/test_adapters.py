@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import base64
+
 import pytest
 
 from receipts.adapters.arxiv import parse_arxiv
@@ -9,6 +11,7 @@ from receipts.adapters.news import NewsAdapter, parse_bing_news, parse_gnews
 from receipts.adapters.reddit import RedditAdapter, parse_reddit_comments, parse_reddit_posts
 from receipts.adapters.web import WebAdapter, parse_bing, parse_mojeek
 from receipts.adapters.wiki import WikiAdapter, parse_wiki
+from receipts.text import search_phrase
 
 
 class FakeHttp:
@@ -118,6 +121,39 @@ def test_hn_search_strips_the_question(fixture_text):
     adapter.search("why do AI coding agents waste context window")
     assert "query=ai+coding+agents+waste+context" in http.calls[0][0]
     assert "why" not in http.calls[0][0]
+
+
+def test_bing_redirects_are_resolved():
+    from receipts.adapters.web import resolve_bing_url
+
+    dest = "https://example.com/a/b?c=1"
+    payload = base64.urlsafe_b64encode(dest.encode()).decode().rstrip("=")
+    wrapped = "https://www.bing.com/ck/a?!&&p=abc&u=a1" + payload + "&ntb=1"
+    assert resolve_bing_url(wrapped) == dest
+    assert resolve_bing_url("https://example.com/direct") == "https://example.com/direct"
+    assert resolve_bing_url("https://www.bing.com/images/search?q=x") == ""
+
+
+def test_search_phrase_keeps_content_words_and_short_queries():
+    assert search_phrase("why do AI coding agents waste context window") == \
+        "ai coding agents waste context"
+    assert search_phrase("bose anc hiss") == "bose anc hiss"
+    assert search_phrase("   ") == ""
+
+
+def test_web_search_asks_the_content_words(fixture_text):
+    http = FakeHttp({"bing.com/search": fixture_text("bing.html")})
+    adapter = WebAdapter(http)
+    adapter.search("why do AI coding agents waste context window")
+    assert "q=ai+coding+agents+waste+context" in http.calls[0][0]
+    assert "why" not in http.calls[0][0]
+
+
+def test_reddit_search_asks_a_four_word_phrase(fixture_text):
+    http = FakeHttp({"arctic-shift": fixture_text("reddit_posts.json")})
+    adapter = RedditAdapter(http)
+    adapter.search("why do AI coding agents waste context window")
+    assert "query=ai+coding+agents+waste" in http.calls[0][0]
 
 
 def test_web_falls_back_to_mojeek(fixture_text):

@@ -8,6 +8,7 @@ ROOT = Path(__file__).resolve().parent.parent
 
 ALLOWED_HOSTS = {
     "www.bing.com",
+    "bing.com",  # the redirect check, never fetched
     "www.mojeek.com",
     "news.google.com",
     "hn.algolia.com",

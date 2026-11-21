@@ -153,7 +153,7 @@ Measured on 2026-11-21 from one Linux machine through a logging proxy. These are
 
 | source | live result on 2026-11-21 | in the demo |
 | --- | --- | --- |
-| web | Bing answered 200 with 10 organic rows, but for a natural-language question they were generic dictionary pages, so 6 fetched pages produced 0 quotes. Mojeek returned 403. | no |
+| web | Bing answered 200 but wrapped every organic link in its `/ck/a?u=a1…` redirect; the adapter decodes it, so pages are real sites. Relevance is still weak: on 2026-11-21, 3 of 8 pages produced no quotable sentence and the rest produced 3 quotes. Mojeek returned 403. | no |
 | news | 15 quotes from 6 pages, 2 blocked with 403. Google News links are JavaScript redirects, so the Bing News RSS fallback supplied the fetchable URLs. | yes |
 | hn | 18 quotes from 12 pages at depth 1. | yes |
 | wiki | Works, but drifts on a specific question (Omarchy, Chemotherapy, GLM). Left out of the demo. | no |

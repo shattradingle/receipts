@@ -53,6 +53,20 @@ def content_terms(text: str, min_length: int = 2) -> list[str]:
     return out
 
 
+def search_phrase(text: str, max_terms: int = 5) -> str:
+    """A literal engine query: the content words of a question, in order.
+
+    Asked verbatim, Bing's HTML endpoint answers a natural-language question with
+    dictionary pages; asked its content words, it answers the question. Short
+    queries are passed through unchanged.
+    """
+    cleaned = " ".join((text or "").split())
+    if len(cleaned.split()) <= 5:
+        return cleaned
+    terms = content_terms(cleaned)
+    return " ".join(terms[:max_terms]) if terms else cleaned
+
+
 def words(text: str) -> list[str]:
     return re.findall(r"\S+", text.strip())
 

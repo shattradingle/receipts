@@ -15,6 +15,7 @@ import re
 from urllib.parse import urlencode
 
 from ..extract import clean_text
+from ..text import search_phrase
 from ..models import Hit
 from .base import Adapter, FetchError
 
@@ -111,8 +112,9 @@ class RedditAdapter(Adapter):
         hits: list[Hit] = []
         errors: list[FetchError] = []
         attempted = 0
+        phrase = search_phrase(query, 4)
         for sub in SUBS:
-            params = {"subreddit": sub, "query": query, "limit": "25", "sort": "desc"}
+            params = {"subreddit": sub, "query": phrase, "limit": "25", "sort": "desc"}
             url = f"{ARCTIC}/posts/search?{urlencode(params)}"
             try:
                 response = self.http.get(url, stage="search",
