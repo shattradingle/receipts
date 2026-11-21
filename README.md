@@ -172,6 +172,14 @@ More limits:
 - **The web changes.** Determinism is over the fetched pages. The same question tomorrow can return a different board.
 - **Local state only.** No account, no sync, no cloud. `RECEIPTS_HOME` moves the database and exports.
 
+## Part of the keyless stack
+
+Public data for agents, with receipts. No API key anywhere:
+
+- **[reddit-rail](https://github.com/shattradingle/reddit-rail)** — Reddit research for your agent: search threads and read whole comment trees.
+- **[osint-rail](https://github.com/shattradingle/osint-rail)** — one seed in, a sourced dossier out, every claim with its URL.
+- **[receipts](https://github.com/shattradingle/receipts)** — a research desk that only quotes what it fetched.
+
 ## Changelog
 
 See [CHANGELOG.md](CHANGELOG.md). MIT licence.
