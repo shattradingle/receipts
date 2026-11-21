@@ -1,0 +1,2106 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f7f5f0">
+<meta name="description" content="A local research desk that cannot hallucinate: verbatim quotes, each with its URL, date and the query that found it.">
+<title>receipts · why do AI coding agents waste context window</title>
+<script>
+/* resolve ?theme= before first paint so the page does not flash the system theme */
+(function () {
+  try {
+    var t = new URLSearchParams(window.location.search).get("theme");
+    if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t);
+  } catch (e) { /* fall back to the system theme */ }
+})();
+</script>
+<style>
+/* receipts — editorial paper, mono receipts, stamp red. No external assets. */
+
+:root {
+  --paper: #f7f5f0;
+  --paper-2: #fffdf8;
+  --ink: #161616;
+  --ink-soft: #3d392f;
+  --muted: #6f6859;
+  --faint: #9b9484;
+  --rule: #d8d2c4;
+  --rule-dark: #b9b09e;
+  --accent: #8a1f11;
+  --accent-2: #a8331f;
+  --ok: #3c6e47;
+  --warn: #8a6a11;
+  --serif: Georgia, "Iowan Old Style", "Palatino Linotype", "Times New Roman", serif;
+  --mono: "SFMono-Regular", "Cascadia Mono", "IBM Plex Mono", Consolas, "Liberation Mono", monospace;
+  --sans: "Helvetica Neue", "Segoe UI", Roboto, Arial, sans-serif;
+  --page: 1500px;
+  --gutter: clamp(18px, 4vw, 48px);
+}
+
+* { box-sizing: border-box; }
+
+html {
+  background: var(--paper);
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  border-top: 3px solid var(--accent);
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection { background: var(--accent); color: var(--paper); }
+
+a { color: inherit; }
+
+button, input { font: inherit; color: inherit; }
+
+button { border-radius: 0; }
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+[hidden] { display: none !important; }
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip {
+  position: absolute;
+  left: 12px;
+  top: -48px;
+  z-index: 100;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 8px 12px;
+  text-decoration: none;
+}
+.skip:focus { top: 12px; }
+
+#app { max-width: var(--page); margin: 0 auto; }
+
+.mono { font-family: var(--mono); }
+
+.eyebrow {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.eyebrow::before {
+  content: "";
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  background: var(--accent);
+  margin-right: 7px;
+  vertical-align: 1px;
+}
+
+.count {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+/* ---------------------------------------------------------------- top bar */
+
+.topbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 28px;
+  padding: 26px var(--gutter) 18px;
+  border-bottom: 1px solid var(--ink);
+}
+
+.masthead { min-width: 0; }
+
+.wordmark {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: clamp(34px, 4vw, 44px);
+  font-weight: 700;
+  line-height: 0.86;
+  letter-spacing: -0.055em;
+}
+
+.wordmark-dot { color: var(--accent); }
+
+.kicker {
+  margin: 12px 0 0;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.055em;
+  color: var(--muted);
+}
+
+.topbar-controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.source-set {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.source-chip { position: relative; display: inline-block; }
+
+.source-chip input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.source-chip span {
+  display: block;
+  padding: 5px 8px;
+  border: 1px solid var(--rule-dark);
+  background: transparent;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+
+.source-chip span:hover { border-color: var(--ink); color: var(--ink); }
+
+.source-chip input:checked + span {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
+}
+
+.source-chip input:focus-visible + span {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.run {
+  padding: 10px 22px;
+  border: 1px solid var(--ink);
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease;
+}
+
+.run:hover { background: var(--accent); border-color: var(--accent); }
+
+.run:disabled { opacity: 0.55; cursor: wait; }
+
+/* ------------------------------------------------------------------- ask */
+
+.ask-wrap {
+  padding: 28px var(--gutter) 0;
+  background: var(--paper);
+}
+
+.ask { display: block; }
+
+.ask input {
+  display: block;
+  width: 100%;
+  padding: 0 0 13px;
+  border: 0;
+  border-bottom: 1px solid var(--ink);
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: clamp(20px, 2.3vw, 27px);
+  letter-spacing: -0.01em;
+  outline: none;
+  border-radius: 0;
+}
+
+.ask input::placeholder { color: var(--faint); font-style: italic; }
+
+.ask input:focus { border-bottom-color: var(--accent); }
+.ask input:focus-visible { outline: none; }
+
+.ask-hint {
+  display: block;
+  margin-top: 8px;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.03em;
+  color: var(--faint);
+}
+
+/* ---------------------------------------------------------------- status */
+
+.statusbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 16px;
+  padding: 12px var(--gutter) 0;
+}
+
+.status-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.status {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.demo-flag {
+  padding: 2px 6px;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.progress {
+  flex: 1 0 100%;
+  height: 2px;
+  margin-top: 2px;
+  background: var(--rule);
+  overflow: hidden;
+}
+
+.progress span {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: var(--accent);
+  transition: width 320ms ease;
+}
+
+/* ----------------------------------------------------------------- board */
+
+.board {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr) 340px;
+  margin-top: 22px;
+  border-top: 1px solid var(--rule-dark);
+  /* the desk runs edge to edge only when the viewport is wider than the page */
+  padding: 0 var(--gutter);
+}
+
+.panel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.run-id {
+  font-size: 9px;
+  color: var(--faint);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+/* -------------------------------------------------------------- coverage */
+
+.coverage {
+  position: relative;
+  padding: 22px 20px 40px 0;
+  border-right: 1px solid var(--rule);
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px 12px;
+  margin: 24px 0 0;
+}
+
+.stat-num {
+  display: block;
+  font-family: var(--serif);
+  font-size: 34px;
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.stat-label {
+  display: block;
+  margin-top: 5px;
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.stamp {
+  display: block;
+  width: max-content;
+  margin: 24px 18px 28px auto;
+  padding: 7px 9px 8px;
+  border: 2px solid var(--accent);
+  outline: 1px solid var(--accent);
+  outline-offset: 3px;
+  color: var(--accent);
+  font-family: var(--mono);
+  font-size: 8.5px;
+  line-height: 1.5;
+  letter-spacing: 0.16em;
+  text-align: center;
+  transform: rotate(-5deg);
+  opacity: 0.82;
+}
+
+.stamp span { display: block; }
+
+.kind-block { margin-top: 26px; }
+
+.kinds {
+  margin: 9px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.kind-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 3px 0;
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--muted);
+}
+
+.kind-name {
+  width: 38px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.kind-dots {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+
+.kind-dots .status-dot { width: 5px; height: 5px; }
+
+.kind-count { font-size: 8.5px; color: var(--faint); }
+
+.theme-block { margin-top: 24px; }
+
+.themes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 10px;
+}
+
+.theme {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 4px 7px;
+  border: 1px solid var(--rule-dark);
+  background: var(--paper-2);
+  color: var(--ink-soft);
+  font-family: var(--mono);
+  font-size: 10px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.theme b {
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 9px;
+}
+
+.theme:hover { border-color: var(--accent); }
+
+.theme[aria-pressed="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--paper);
+}
+
+.theme[aria-pressed="true"] b { color: var(--paper); }
+
+.failure-block { margin-top: 30px; }
+
+.failures {
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+  max-height: 260px;
+  overflow: auto;
+}
+
+.failures li {
+  margin: 0 0 11px;
+  padding: 1px 0 1px 9px;
+  border-left: 2px solid var(--accent);
+  font-size: 10.5px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.failure-reason {
+  display: block;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.failure-url {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  color: var(--ink-soft);
+}
+
+.failure-none {
+  border-left-color: var(--ok) !important;
+  font-style: italic;
+}
+
+/* --------------------------------------------------------------- quotes */
+
+.quotes-col {
+  min-width: 0;
+  padding: 22px clamp(20px, 2.8vw, 38px) 44px;
+}
+
+.quotes-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--ink);
+}
+
+.quotes-head .panel-head { flex: 1 1 auto; }
+
+.filter input {
+  width: 158px;
+  padding: 4px 0;
+  border: 0;
+  border-bottom: 1px solid var(--rule-dark);
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 10.5px;
+  outline: none;
+  border-radius: 0;
+}
+
+.filter input::placeholder { color: var(--faint); }
+.filter input:focus { border-bottom-color: var(--accent); }
+.filter input:focus-visible { outline: none; }
+
+.quotes { margin-top: 0; }
+
+.quote-card {
+  position: relative;
+  padding: 24px 12px 18px 18px;
+  border-bottom: 1px dashed var(--rule-dark);
+  transition: background-color 120ms ease;
+}
+
+.quote-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 20px;
+  bottom: 20px;
+  width: 2px;
+  background: transparent;
+}
+
+.quote-card:hover { background: rgba(255, 253, 248, 0.66); }
+
+.quote-card.is-active { background: var(--paper-2); }
+.quote-card.is-active::before { background: var(--accent); }
+
+.quote {
+  margin: 0 0 15px;
+  padding-left: 0.44em;
+  text-indent: -0.44em;
+  font-family: var(--serif);
+  font-size: clamp(18px, 1.55vw, 21.5px);
+  line-height: 1.54;
+  letter-spacing: -0.004em;
+  color: var(--ink);
+  text-wrap: pretty;
+}
+
+.quote::before {
+  content: "“";
+  margin-right: 0.08em;
+  color: var(--accent);
+  font-size: 1.05em;
+}
+
+.receipt {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  font-family: var(--mono);
+  font-size: 10px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+
+.receipt .dash { color: var(--accent); }
+
+.receipt a {
+  color: var(--ink-soft);
+  text-decoration: none;
+  border-bottom: 1px dotted var(--rule-dark);
+}
+
+.receipt a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+.receipt .sep { color: var(--rule-dark); }
+
+.receipt .via {
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.copy {
+  margin-left: auto;
+  padding: 3px 7px;
+  border: 1px solid var(--rule-dark);
+  background: transparent;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.copy:hover { border-color: var(--accent); color: var(--accent); }
+
+.quote-empty {
+  margin: 32px 0;
+  font-family: var(--serif);
+  font-size: 18px;
+  font-style: italic;
+  color: var(--muted);
+}
+
+.key-hint {
+  margin: 22px 0 0;
+  text-align: right;
+  font-size: 9px;
+  letter-spacing: 0.05em;
+  color: var(--faint);
+}
+
+/* -------------------------------------------------------------- sources */
+
+.sources-col {
+  padding: 22px 0 40px 22px;
+  border-left: 1px solid var(--rule);
+}
+
+.sources {
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+  max-height: 72vh;
+  overflow: auto;
+}
+
+.sources li {
+  padding: 12px 0 13px;
+  border-bottom: 1px dotted var(--rule);
+}
+
+.source-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 5px;
+}
+
+.kind {
+  padding: 1px 4px;
+  border: 1px solid var(--rule-dark);
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.status-dot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ok);
+}
+
+.status-dot.blocked,
+.status-dot.failed,
+.status-dot.timeout { background: var(--accent); }
+.status-dot.empty,
+.status-dot.thin { background: var(--warn); }
+
+.source-title {
+  display: block;
+  font-family: var(--serif);
+  font-size: 13.5px;
+  line-height: 1.32;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.source-title:hover { color: var(--accent); }
+
+.source-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 4px;
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--muted);
+}
+
+.source-meta .sep { color: var(--rule-dark); }
+.source-meta .source-quotes { color: var(--accent); }
+
+.source-reason {
+  margin-top: 4px;
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: 0.02em;
+  color: var(--accent);
+  overflow-wrap: anywhere;
+}
+
+/* --------------------------------------------------------------- export */
+
+.exportbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 13px var(--gutter);
+  border-top: 1px solid var(--ink);
+}
+
+.exportbar .eyebrow { margin-right: 8px; }
+
+.ghost {
+  padding: 6px 11px;
+  border: 1px solid var(--ink);
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.ghost:hover { background: var(--ink); color: var(--paper); }
+.ghost:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ---------------------------------------------------------------- strip */
+
+.strip {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 15px var(--gutter) 22px;
+  border-top: 1px solid var(--rule-dark);
+  font-family: var(--mono);
+  font-size: 10px;
+  line-height: 1.7;
+  letter-spacing: 0.01em;
+  color: var(--muted);
+}
+
+.strip::before {
+  content: "";
+  flex: none;
+  width: 6px;
+  height: 6px;
+  margin-top: 5px;
+  background: var(--accent);
+}
+
+/* ---------------------------------------------------------------- empty */
+
+.empty {
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(250px, 0.85fr);
+  gap: clamp(28px, 5vw, 72px);
+  padding: clamp(44px, 8vh, 92px) var(--gutter) 64px;
+}
+
+.empty-main { min-width: 0; }
+
+.empty h1 {
+  max-width: 15ch;
+  margin: 16px 0 20px;
+  font-family: var(--serif);
+  font-size: clamp(36px, 5.1vw, 64px);
+  font-weight: 400;
+  line-height: 1.02;
+  letter-spacing: -0.038em;
+  text-wrap: balance;
+}
+
+.empty-copy {
+  max-width: 52ch;
+  margin: 0 0 34px;
+  font-size: 16px;
+  line-height: 1.62;
+  color: var(--ink-soft);
+}
+
+.samples {
+  display: grid;
+  gap: 2px;
+  justify-items: start;
+  max-width: 560px;
+}
+
+.sample {
+  padding: 8px 0;
+  border: 0;
+  border-bottom: 1px solid var(--rule-dark);
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 15px;
+  font-style: italic;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sample::before {
+  content: "→";
+  margin-right: 9px;
+  font-family: var(--mono);
+  font-style: normal;
+  font-size: 11px;
+  color: var(--accent);
+}
+
+.sample:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+.empty-side {
+  align-self: end;
+  padding-left: 26px;
+  border-left: 1px solid var(--rule);
+}
+
+.how {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.how li {
+  display: grid;
+  grid-template-columns: 26px 1fr;
+  gap: 8px;
+  align-items: baseline;
+  padding-bottom: 12px;
+  border-bottom: 1px dotted var(--rule);
+}
+
+.how-n {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  color: var(--accent);
+}
+
+.how-t {
+  font-family: var(--serif);
+  font-size: 15px;
+  line-height: 1.35;
+  color: var(--ink-soft);
+}
+
+.empty-note {
+  margin: 22px 0 0;
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  color: var(--faint);
+  text-transform: uppercase;
+}
+
+/* -------------------------------------------------------------- working */
+
+.working {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(240px, 0.8fr);
+  gap: 48px;
+  align-items: end;
+  padding: clamp(44px, 8vh, 88px) var(--gutter) 72px;
+}
+
+.working h2 {
+  margin: 14px 0 12px;
+  font-family: var(--serif);
+  font-size: clamp(30px, 4vw, 50px);
+  font-weight: 400;
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+}
+
+.working-copy {
+  max-width: 46ch;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 15.5px;
+  line-height: 1.6;
+}
+
+.working-lines {
+  display: grid;
+  gap: 13px;
+  align-self: center;
+}
+
+.working-lines span {
+  display: block;
+  height: 1px;
+  background: var(--rule-dark);
+}
+
+.working-lines span:nth-child(2) { width: 88%; }
+.working-lines span:nth-child(3) { width: 94%; }
+.working-lines span:nth-child(4) { width: 70%; }
+
+/* ---------------------------------------------------------------- error */
+
+.error-state {
+  padding: clamp(44px, 8vh, 84px) var(--gutter) 72px;
+}
+
+.error-state h2 {
+  margin: 14px 0 14px;
+  font-family: var(--serif);
+  font-size: clamp(30px, 4vw, 46px);
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  color: var(--accent);
+}
+
+.error-message {
+  max-width: 62ch;
+  margin: 0 0 24px;
+  padding-left: 14px;
+  border-left: 2px solid var(--accent);
+  color: var(--ink-soft);
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+.noscript {
+  margin: 24px var(--gutter);
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--accent);
+}
+
+/* ---------------------------------------------------------------- toast */
+
+.toast {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 60;
+  max-width: min(360px, calc(100vw - 40px));
+  padding: 9px 12px;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.03em;
+  line-height: 1.5;
+}
+
+/* ---------------------------------------------------------- static mode */
+
+body.static-board .ask input { color: var(--muted); }
+body.static-board .source-chip span { opacity: 0.72; }
+body.static-board .source-chip input:disabled + span { cursor: default; }
+
+/* -------------------------------------------------------------- narrow */
+
+@media (max-width: 1120px) {
+  .board { grid-template-columns: 222px minmax(0, 1fr) 300px; padding: 0 18px; }
+}
+
+@media (max-width: 900px) {
+  .topbar {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 18px;
+    padding-bottom: 16px;
+  }
+
+  .topbar-controls {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .ask-wrap {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    padding-top: 15px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .ask input { font-size: 20px; padding-bottom: 10px; }
+  .ask-hint { display: none; }
+
+  .statusbar { padding-top: 9px; }
+
+  .board { grid-template-columns: 1fr; }
+
+  .coverage {
+    order: 1;
+    padding: 20px 18px 30px;
+    border-right: 0;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .stats { grid-template-columns: repeat(4, 1fr); gap: 12px; }
+
+  .run-id { display: none; }
+
+  .stamp {
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    margin: 0;
+    font-size: 7.5px;
+    padding: 5px 7px;
+  }
+
+  .theme-block { margin-top: 22px; }
+  .failure-block { margin-top: 24px; }
+  .failures { max-height: 180px; }
+
+  .quotes-col {
+    order: 2;
+    padding: 22px 18px 34px;
+  }
+
+  .sources-col {
+    order: 3;
+    padding: 20px 18px 36px;
+    border-left: 0;
+    border-top: 1px solid var(--rule);
+  }
+
+  .sources { max-height: none; }
+
+  .empty {
+    grid-template-columns: 1fr;
+    gap: 38px;
+    padding-top: 44px;
+  }
+
+  .empty-side {
+    align-self: start;
+    padding: 22px 0 0;
+    border-left: 0;
+    border-top: 1px solid var(--rule);
+  }
+
+  .working {
+    grid-template-columns: 1fr;
+    gap: 32px;
+    align-items: start;
+  }
+
+  .exportbar { justify-content: flex-start; }
+}
+
+@media (max-width: 560px) {
+  .source-set {
+    width: auto;
+    flex: 1 1 auto;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+  .source-chip span { padding: 4px 6px; font-size: 9px; }
+  .run { flex: none; padding: 9px 14px; }
+  .stats { grid-template-columns: 1fr 1fr; }
+  .quote-card { padding: 20px 4px 16px 14px; }
+  .quote { font-size: 18px; }
+  .quotes-head { align-items: flex-start; flex-direction: column; gap: 10px; }
+  .filter { width: 100%; }
+  .filter input { width: 100%; }
+  .key-hint { text-align: left; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
+
+/* ----------------------------------------------------------------- dark */
+
+@media (prefers-color-scheme: dark) {
+  html { color-scheme: dark; }
+
+  :root {
+    --paper: #151412;
+    --paper-2: #1d1b17;
+    --ink: #efe9dc;
+    --ink-soft: #cfc7b6;
+    --muted: #9b9280;
+    --faint: #766f60;
+    --rule: #332f28;
+    --rule-dark: #4b4438;
+    --accent: #df6a52;
+    --ok: #7fae86;
+    --warn: #d1ab4d;
+  }
+
+  .run { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .run:hover { background: var(--accent); border-color: var(--accent); color: var(--paper); }
+  .source-chip input:checked + span { background: var(--ink); color: var(--paper); }
+  .quote-card:hover { background: rgba(255, 255, 255, 0.035); }
+  .quote-card.is-active { background: var(--paper-2); }
+  .ghost:hover { background: var(--ink); color: var(--paper); }
+  .toast { background: var(--ink); color: var(--paper); }
+}
+
+.panel-note {
+  margin: 8px 0 0;
+  font-family: var(--serif);
+  font-size: 13px;
+  font-style: italic;
+  color: var(--muted);
+}
+
+
+/* Explicit override, used by docs screenshots and by anyone who wants paper at night. */
+html[data-theme="light"] {
+  color-scheme: light;
+  --paper: #f7f5f0;
+  --paper-2: #fffdf8;
+  --ink: #161616;
+  --ink-soft: #3d392f;
+  --muted: #6f6859;
+  --faint: #9b9484;
+  --rule: #d8d2c4;
+  --rule-dark: #b9b09e;
+  --accent: #8a1f11;
+  --ok: #3c6e47;
+  --warn: #8a6a11;
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: #151412;
+  --paper-2: #1d1b17;
+  --ink: #efe9dc;
+  --ink-soft: #cfc7b6;
+  --muted: #9b9280;
+  --faint: #766f60;
+  --rule: #332f28;
+  --rule-dark: #4b4438;
+  --accent: #df6a52;
+  --ok: #7fae86;
+  --warn: #d1ab4d;
+}
+
+</style>
+<script>window.__RECEIPTS_BOARD__ = {"id": "r-20261121-152429", "question": "why do AI coding agents waste context window", "started_at": "2026-11-21T15:24:29Z", "finished_at": "2026-11-21T15:24:38Z", "seconds": 8.758, "coverage": {"queries": 9, "hits": 66, "pages_ok": 11, "pages_failed": 1, "quotes": 25}, "sources": [{"id": "s1", "url": "https://www.infoworld.com/article/4251051/ai-coding-agents-need-a-safe-place-to-work-eclipse-is-building-the-sandbox-to-give-it-to-them.html", "title": "AI coding agents need a safe place to work; Eclipse is building the sandbox to give it to them | InfoWorld", "domain": "infoworld.com", "date": "2026-11-19", "kind": "news", "status": "ok", "quotes": 3, "via": "ai coding agents"}, {"id": "s2", "url": "https://www.forbes.com/sites/victordey/2026/11/19/slack-evp-says-ai-coding-agents-need-the-conversation-behind-the-code/", "title": "Slack EVP Says AI Coding Agents Need The Conversation Behind The Code", "domain": "forbes.com", "date": "2026-11-18", "kind": "news", "status": "blocked", "quotes": 0, "via": "ai coding agents"}, {"id": "s3", "url": "https://note.com/yesterdayintech/n/n630658f56db2?hl=en", "title": "10 IT News Picks for November 18 | Challenges and Efficiency in the Era of AI Coding Agents｜Yesterday in Tech｜きのうのITニュース", "domain": "note.com", "date": "2026-11-18", "kind": "news", "status": "ok", "quotes": 3, "via": "ai coding agents"}, {"id": "s4", "url": "https://venturebeat.com/data/companies-are-building-governed-semantic-layers-most-say-their-ai-agents-are-getting-context-somewhere-else", "title": "Companies are building governed semantic layers. Most say their AI agents are getting context somewhere else | VentureBeat", "domain": "venturebeat.com", "date": "2026-10-06", "kind": "news", "status": "ok", "quotes": 3, "via": "ai coding agents waste context window"}, {"id": "s5", "url": "http://arxiv.org/abs/2604.02544v3", "title": "[2604.02544v3] Developer Experience with AI Coding Agents: HTTP Behavioral Signatures in Documentation Portals", "domain": "arxiv.org", "date": "2026-04-02", "kind": "arxiv", "status": "ok", "quotes": 3, "via": "ai coding agents waste context window"}, {"id": "s6", "url": "https://vexp.dev", "title": "vexp — The Reliability Layer for AI Coding Agents", "domain": "vexp.dev", "date": "2026-02-24", "kind": "hn", "status": "ok", "quotes": 1, "via": "\"why do AI coding agents waste context window\""}, {"id": "s7", "url": "https://news.ycombinator.com/item?id=47123966", "title": "Show HN: Vexp – Local-first context engine for AI coding agents | Hacker News", "domain": "news.ycombinator.com", "date": "2026-02-23", "kind": "hn", "status": "ok", "quotes": 1, "via": "\"why do AI coding agents waste context window\""}, {"id": "s8", "url": "https://news.ycombinator.com/item?id=47113273", "title": "Show HN: Vexp – graph-RAG context engine, 65-70% fewer tokens for AI agents | Hacker News", "domain": "news.ycombinator.com", "date": "2026-02-22", "kind": "hn", "status": "ok", "quotes": 3, "via": "\"why do AI coding agents waste context window\""}, {"id": "s9", "url": "http://arxiv.org/abs/2602.14690v5", "title": "[2602.14690v5] Harness Engineering for Agentic AI Coding Tools: An Exploratory Study", "domain": "arxiv.org", "date": "2026-02-16", "kind": "arxiv", "status": "ok", "quotes": 3, "via": "ai coding agents waste context window"}, {"id": "s10", "url": "https://github.com/meghendra6/cgrep", "title": "GitHub - meghendra6/cgrep · GitHub", "domain": "github.com", "date": "2026-02-14", "kind": "hn", "status": "ok", "quotes": 0, "via": "\"why do AI coding agents waste context window\""}, {"id": "s11", "url": "http://arxiv.org/abs/2510.09567v1", "title": "[2510.09567v1] Safe, Untrusted, \"Proof-Carrying\" AI Agents: toward the agentic lakehouse", "domain": "arxiv.org", "date": "2025-10-10", "kind": "arxiv", "status": "ok", "quotes": 2, "via": "ai coding agents waste context window"}, {"id": "s12", "url": "http://arxiv.org/abs/2511.02841v2", "title": "[2511.02841v2] AI Agents with Decentralized Identifiers and Verifiable Credentials", "domain": "arxiv.org", "date": "2025-10-01", "kind": "arxiv", "status": "ok", "quotes": 3, "via": "ai coding agents"}], "quotes": [{"id": "q1", "text": "AI coding tools are moving beyond copilots that make suggestions to independent, autonomous agents that execute terminal commands, write and modify software, run tests, and install dependencies.", "source_id": "s1", "score": 0.525, "terms": ["ai", "coding", "agents"]}, {"id": "q2", "text": "Developers can use the vendor-neutral platform to test various autonomous AI coding tools in isolated environments, with explicitly defined access to files, credentials, and networks.", "source_id": "s1", "score": 0.398, "terms": ["ai", "coding"]}, {"id": "q3", "text": "Ultimately, the project highlights what the Eclipse Foundation considers a much bigger issue: Who controls the infrastructure that AI agents rely on.", "source_id": "s1", "score": 0.347, "terms": ["ai", "agents"]}, {"id": "q4", "text": "While AI coding agents are being rapidly adopted in development environments, challenges regarding security risks and computational efficiency are becoming apparent.", "source_id": "s3", "score": 0.554, "terms": ["ai", "coding", "agents"]}, {"id": "q5", "text": "Furthermore, based on the development of Quake, the article presents the perspective of how creative problem-solving by humans, rather than AI coding agents, is crucial.", "source_id": "s3", "score": 0.519, "terms": ["ai", "coding", "agents"]}, {"id": "q6", "text": "It is an open-source plugin that allows AI coding agents to learn from past sessions and achieve cost reductions while maintaining execution success.", "source_id": "s3", "score": 0.499, "terms": ["ai", "coding", "agents"]}, {"id": "q7", "text": "Long-context loading, pasting a large set of documents or records straight into the model's context window, was named by 19%.", "source_id": "s4", "score": 0.401, "terms": ["context", "window"]}, {"id": "q8", "text": "The company's Cortex AI Gateway, which auto-routes a task to a smaller model first and escalates only when needed, depends on the task arriving with context already prepared.", "source_id": "s4", "score": 0.339, "terms": ["ai", "context"]}, {"id": "q9", "text": "Baris Gultekin, Snowflake's vice president of AI, explained in August that without good context, a model has to do the exploratory work itself, writing and testing SQL, searching through data and retrying when something doesn't work, a process that's expensive and typically needs a more …", "source_id": "s4", "score": 0.315, "terms": ["ai", "context"]}, {"id": "q10", "text": "Abstract:The rapid adoption of AI coding agents and AI assistant web services is fundamentally changing how developers discover, consume, and interact with technical documentation.", "source_id": "s5", "score": 0.525, "terms": ["ai", "coding", "agents"]}, {"id": "q11", "text": "We present an empirical study of HTTP request fingerprints from nine AI coding agents (Aider, Antigravity, Claude Code, Cline, Cursor, Junie, OpenCode, GitHub Copilot (VS Code agent mode), and Windsurf) and six AI assistant services (ChatGPT, Claude, Google Gemini, Google NotebookLM, MistralAI, and Perplexity) accessing …", "source_id": "s5", "score": 0.471, "terms": ["ai", "coding", "agents"]}, {"id": "q12", "text": "Our study shows that AI agent access compresses multi-page navigation into a single or two requests, making traditional engagement metrics - session depth, time-on-page, click path, and bounce rate - unreliable indicators of actual documentation consumption.", "source_id": "s5", "score": 0.249, "terms": ["ai"]}, {"id": "q13", "text": "Pro at $19 for professionals, Team at $29 per seat with shared context and analytics, and the Enterprise SDK when your fleet or pipeline needs the engine itself.", "source_id": "s6", "score": 0.22, "terms": ["context"]}, {"id": "q14", "text": "- When an agent requests context, vexp serves a token-budgeted \"capsule\" containing only the relevant nodes: the target function, its callers, imported types, cross-file dependencies — not entire files", "source_id": "s7", "score": 0.251, "terms": ["context"]}, {"id": "q15", "text": "When you ask Claude Code or Cursor to fix a bug, they typically grep around, cat a bunch of files, and dump thousands of lines into the context.", "source_id": "s8", "score": 0.274, "terms": ["context"]}, {"id": "q16", "text": "The result is a compact \"context capsule\" that gives the agent everything it needs in ~2k-4k tokens instead of 15-20k.", "source_id": "s8", "score": 0.261, "terms": ["context"]}, {"id": "q17", "text": "vexp is a local-first context engine that builds a semantic graph of your codebase (AST + call graph + import graph + change coupling from git history), then uses a hybrid search — keyword matching (FTS5 BM25), TF-IDF cosine similarity, and graph centrality — to …", "source_id": "s8", "score": 0.256, "terms": ["context"]}, {"id": "q18", "text": "We present a systematic analysis of configuration mechanisms for agentic AI coding tools, covering Claude Code, GitHub Copilot, Cursor, Gemini, and Codex.", "source_id": "s9", "score": 0.402, "terms": ["ai", "coding"]}, {"id": "q19", "text": "First, Context Files dominate the configuration landscape and are often the sole mechanism in a repository, with AGENTS$.$md emerging as an interoperable standard across tools.", "source_id": "s9", "score": 0.384, "terms": ["agents", "context"]}, {"id": "q20", "text": "We identify eight configuration mechanisms spanning from static context to executable and external integrations and, in an empirical study of 2,853 GitHub repositories, examine whether and how they are adopted, with a detailed analysis of Context Files, Skills, and Subagents.", "source_id": "s9", "score": 0.248, "terms": ["context"]}, {"id": "q21", "text": "Our prototype demonstrates that untrusted AI agents can operate safely on production data and outlines a path toward a fully agentic lakehouse.", "source_id": "s11", "score": 0.394, "terms": ["ai", "agents"]}, {"id": "q22", "text": "Using Bauplan as a case study, we show how data branching and declarative environments extend naturally to agents, enabling reproducibility and observability while reducing the attack surface.", "source_id": "s11", "score": 0.26, "terms": ["agents"]}, {"id": "q23", "text": "Abstract:A fundamental limitation of current LLM-based AI agents is their inability to build differentiated trust among each other at the onset of an agent-to-agent dialogue.", "source_id": "s12", "score": 0.388, "terms": ["ai", "agents"]}, {"id": "q24", "text": "A promising way to fill this gap in Agentic AI is to equip agents with long-lived digital identities and introduce tamper-proof and flexible identity-bound attestations of agents, provisioned by commonly trusted third parties and designed for cross-domain verifiability.", "source_id": "s12", "score": 0.364, "terms": ["ai", "agents"]}, {"id": "q25", "text": "However, autonomous and interoperable trust establishment becomes essential once agents start to operate beyond isolated environments and engage in dialogues across individual or organizational boundaries.", "source_id": "s12", "score": 0.268, "terms": ["agents"]}], "themes": [{"term": "agents", "count": 13, "quotes": ["q1", "q3", "q4", "q5", "q6", "q10", "q11", "q19", "q21", "q22", "q23", "q24", "q25"]}, {"term": "context", "count": 10, "quotes": ["q7", "q8", "q9", "q13", "q14", "q15", "q16", "q17", "q19", "q20"]}, {"term": "coding", "count": 8, "quotes": ["q1", "q2", "q4", "q5", "q6", "q10", "q11", "q18"]}, {"term": "files", "count": 5, "quotes": ["q2", "q14", "q15", "q19", "q20"]}, {"term": "claude code", "count": 3, "quotes": ["q11", "q15", "q18"]}, {"term": "agent", "count": 4, "quotes": ["q11", "q12", "q14", "q16"]}], "failures": [{"url": "https://www.forbes.com/sites/victordey/2026/11/19/slack-evp-says-ai-coding-agents-need-the-conversation-behind-the-code/", "reason": "403", "stage": "fetch"}]}; window.__RECEIPTS_STATIC__ = true;</script>
+<script>
+/* receipts desk. Vanilla JS, no build step, no network except its own API. */
+(function () {
+  "use strict";
+
+  var state = {
+    board: null,
+    visibleQuotes: [],
+    active: -1,
+    filter: "",
+    theme: null,
+    demo: false,
+    static: false,
+    running: false,
+    runId: null,
+    pollTimer: null,
+    toastTimer: null
+  };
+
+  var els = {};
+
+  var IDS = [
+    "app", "ask-form", "question", "run", "status", "demo-flag", "progress",
+    "progress-fill", "empty", "working", "error", "error-title", "error-message",
+    "error-retry", "board", "run-id", "stat-sources", "stat-quotes", "stat-domains",
+    "stat-seconds", "kinds", "themes", "failures", "failure-count", "quote-count", "filter",
+    "quotes", "quote-empty", "source-count", "sources", "exportbar", "export-md",
+    "export-html", "export-json", "strip", "toast"
+  ];
+
+  function cacheDom() {
+    IDS.forEach(function (id) {
+      els[id.replace(/-/g, "_")] = document.getElementById(id);
+    });
+  }
+
+  function make(tag, className, text) {
+    var node = document.createElement(tag);
+    if (className) { node.className = className; }
+    if (text !== undefined && text !== null) { node.textContent = String(text); }
+    return node;
+  }
+
+  function clear(node) {
+    while (node && node.firstChild) { node.removeChild(node.firstChild); }
+  }
+
+  function safeUrl(value) {
+    try {
+      var url = new URL(String(value), window.location.href);
+      if (url.protocol === "http:" || url.protocol === "https:") { return url.href; }
+    } catch (error) { /* not a URL */ }
+    return null;
+  }
+
+  function plural(count, one, many) {
+    return count === 1 ? one : many;
+  }
+
+  function sourceIndex(board) {
+    var map = {};
+    (board.sources || []).forEach(function (source) { map[source.id] = source; });
+    return map;
+  }
+
+  function setStatus(text) {
+    if (els.status) { els.status.textContent = text; }
+  }
+
+  function setProgress(percent) {
+    var value = Math.max(0, Math.min(100, Math.round(percent)));
+    if (els.progress_fill) { els.progress_fill.style.width = value + "%"; }
+    if (els.progress) { els.progress.setAttribute("aria-valuenow", String(value)); }
+  }
+
+  function notice(message) {
+    if (!els.toast) { return; }
+    els.toast.textContent = message;
+    els.toast.hidden = false;
+    clearTimeout(state.toastTimer);
+    state.toastTimer = setTimeout(function () { els.toast.hidden = true; }, 2400);
+  }
+
+  function setRunning(running) {
+    state.running = running;
+    if (els.run) {
+      els.run.disabled = running;
+      els.run.textContent = running ? "Running" : (state.static ? "Static" : "Run");
+    }
+    if (!state.static) {
+      document.querySelectorAll('input[name="source"]').forEach(function (input) {
+        input.disabled = running;
+      });
+    }
+  }
+
+  function hideStates() {
+    els.empty.hidden = true;
+    els.working.hidden = true;
+    els.error.hidden = true;
+    els.board.hidden = true;
+    els.exportbar.hidden = true;
+  }
+
+  function showEmpty() {
+    hideStates();
+    els.empty.hidden = false;
+    clear(els.quotes);
+    clear(els.sources);
+    clear(els.themes);
+    clear(els.failures);
+    state.board = null;
+    state.visibleQuotes = [];
+    state.active = -1;
+    state.theme = null;
+    if (els.filter) { els.filter.value = ""; }
+    state.filter = "";
+    els.strip.textContent = "No board yet. Ask a question above.";
+    setStatus("Waiting for a question.");
+    setProgress(0);
+    document.title = "receipts · the research desk with no author";
+    setRunning(false);
+  }
+
+  function showWorking() {
+    hideStates();
+    els.working.hidden = false;
+    els.strip.textContent = "A run is in progress. The board appears when the pages are in.";
+    setProgress(4);
+  }
+
+  function showError(title, message) {
+    hideStates();
+    els.error.hidden = false;
+    els.error_title.textContent = title;
+    els.error_message.textContent = message || "Unknown error.";
+    els.strip.textContent = "No board. The failure is above.";
+    setStatus("Run stopped.");
+    setProgress(0);
+    setRunning(false);
+    document.title = "receipts · run stopped";
+  }
+
+  function setDemoMode() {
+    state.demo = true;
+    els.demo_flag.hidden = false;
+    els.demo_flag.textContent = "demo board";
+  }
+
+  function setStaticMode() {
+    state.static = true;
+    els.demo_flag.hidden = false;
+    els.demo_flag.textContent = "static board";
+    els.exportbar.hidden = true;
+    var input = els.question;
+    input.readOnly = true;
+    input.placeholder = "Static board. Every sentence is a quote.";
+    input.setAttribute("aria-label", "Static board");
+  }
+
+  /* ------------------------------------------------------------- rendering */
+
+  function renderBoard(board) {
+    if (!board || !board.coverage) {
+      showError("Empty board", "The server returned a board without coverage.");
+      return;
+    }
+    state.board = board;
+    state.active = -1;
+    state.theme = null;
+    state.runId = board.id;
+    hideStates();
+    els.board.hidden = false;
+    els.exportbar.hidden = state.static;
+    if (state.demo || state.static) {
+      els.question.value = board.question || "";
+    }
+
+    els.run_id.textContent = board.id || "";
+    els.stat_sources.textContent = String((board.sources || []).length);
+    els.stat_quotes.textContent = String((board.quotes || []).length);
+    var domains = {};
+    (board.sources || []).forEach(function (source) { if (source.domain) { domains[source.domain] = 1; } });
+    els.stat_domains.textContent = String(Object.keys(domains).length);
+    els.stat_seconds.textContent = Number(board.seconds || 0).toFixed(1);
+
+    renderKinds(board);
+    renderThemes(board);
+    renderFailures(board);
+    renderSources(board);
+    renderQuotes();
+
+    var coverage = board.coverage;
+    setStatus(
+      coverage.queries + " queries · " + coverage.hits + " results · " +
+      coverage.pages_ok + " pages ok / " + coverage.pages_failed + " blocked · " +
+      coverage.quotes + " quotes"
+    );
+    els.strip.textContent = footerText(board);
+    setProgress(100);
+    setRunning(false);
+    document.title = "receipts · " + board.question;
+
+    var kinds = {};
+    (board.sources || []).forEach(function (source) { kinds[source.kind] = 1; });
+    document.querySelectorAll('input[name="source"]').forEach(function (input) {
+      input.checked = Boolean(kinds[input.value]);
+      if (state.static) { input.disabled = true; }
+    });
+
+    if (state.static) {
+      setStatus("static board · every sentence is a quote · " + board.quotes.length + " quotes");
+    } else if (state.demo) {
+      var baked = String(board.finished_at || board.started_at || "").slice(0, 10);
+      setStatus("demo board · " + board.quotes.length + " quotes · baked " + baked);
+    }
+  }
+
+  function footerText(board) {
+    var c = board.coverage;
+    var text = c.quotes + " " + plural(c.quotes, "quote", "quotes") + " from " +
+      c.pages_ok + " " + plural(c.pages_ok, "page", "pages") + " and " +
+      c.queries + " " + plural(c.queries, "query", "queries") + ". ";
+    if (c.pages_failed > 0) {
+      text += c.pages_failed + " " + plural(c.pages_failed, "page was", "pages were") +
+        " blocked and " + plural(c.pages_failed, "is", "are") + " listed in Coverage. ";
+    } else {
+      text += "No pages were blocked. ";
+    }
+    text += "Nothing here was generated.";
+    return text;
+  }
+
+  function renderKinds(board) {
+    clear(els.kinds);
+    var order = ["web", "news", "reddit", "hn", "wiki", "arxiv"];
+    var groups = {};
+    (board.sources || []).forEach(function (source) {
+      if (!groups[source.kind]) { groups[source.kind] = []; }
+      groups[source.kind].push(source);
+    });
+    var kinds = order.filter(function (kind) { return groups[kind]; });
+    Object.keys(groups).forEach(function (kind) {
+      if (kinds.indexOf(kind) === -1) { kinds.push(kind); }
+    });
+    if (!kinds.length) {
+      els.kinds.appendChild(make("li", "panel-note", "No source rows."));
+      return;
+    }
+    kinds.forEach(function (kind) {
+      var sources = groups[kind];
+      var row = make("li", "kind-row");
+      row.appendChild(make("span", "kind-name", kind));
+      var dots = make("span", "kind-dots");
+      sources.forEach(function (source) {
+        var dot = make("span", "status-dot " + (source.status || "ok"));
+        dot.title = (source.domain || kind) + ": " + (source.status || "ok");
+        dot.setAttribute("aria-label", (source.domain || kind) + ": " + (source.status || "ok"));
+        dots.appendChild(dot);
+      });
+      row.appendChild(dots);
+      var ok = sources.filter(function (source) {
+        return source.status === "ok" || source.status === "thin";
+      }).length;
+      row.appendChild(make("span", "kind-count", ok + "/" + sources.length));
+      els.kinds.appendChild(row);
+    });
+  }
+
+  function renderThemes(board) {
+    clear(els.themes);
+    var themes = board.themes || [];
+    if (!themes.length) {
+      els.themes.appendChild(make("p", "panel-note", "No term repeats across two quotes."));
+      return;
+    }
+    themes.forEach(function (theme) {
+      var button = make("button", "theme");
+      button.type = "button";
+      button.setAttribute("aria-pressed", String(state.theme === theme.term));
+      button.appendChild(document.createTextNode(theme.term));
+      button.appendChild(make("b", null, theme.count));
+      button.title = "Show the " + theme.count + " quotes that share this term";
+      button.addEventListener("click", function () {
+        state.theme = state.theme === theme.term ? null : theme.term;
+        updateThemePressed();
+        renderQuotes();
+      });
+      els.themes.appendChild(button);
+    });
+  }
+
+  function updateThemePressed() {
+    els.themes.querySelectorAll(".theme").forEach(function (button) {
+      var term = button.firstChild ? button.firstChild.textContent : "";
+      button.setAttribute("aria-pressed", String(term === state.theme));
+    });
+  }
+
+  function renderFailures(board) {
+    clear(els.failures);
+    var failures = board.failures || [];
+    els.failure_count.textContent = failures.length ? "(" + failures.length + ")" : "(0)";
+    if (!failures.length) {
+      var none = make("li", "failure-none", "No failures. Every request produced a page.");
+      els.failures.appendChild(none);
+      return;
+    }
+    failures.forEach(function (failure) {
+      var item = make("li");
+      var label = failure.reason || "failed";
+      if (failure.stage) { label += " · " + failure.stage; }
+      item.appendChild(make("span", "failure-reason", label));
+      if (failure.url) {
+        var url = safeUrl(failure.url);
+        if (url) {
+          var anchor = make("a", "failure-url", failure.url);
+          anchor.href = url;
+          anchor.target = "_blank";
+          anchor.rel = "noopener noreferrer";
+          item.appendChild(anchor);
+        } else {
+          item.appendChild(make("span", "failure-url", failure.url));
+        }
+      }
+      els.failures.appendChild(item);
+    });
+  }
+
+  function renderSources(board) {
+    clear(els.sources);
+    var sources = board.sources || [];
+    els.source_count.textContent = String(sources.length);
+    var failures = {};
+    (board.failures || []).forEach(function (failure) {
+      if (failure.url) { failures[failure.url] = failure; }
+    });
+    sources.forEach(function (source) {
+      var item = make("li");
+      var top = make("div", "source-top");
+      top.appendChild(make("span", "kind", source.kind || "?"));
+      var dot = make("span", "status-dot " + (source.status || "ok"));
+      dot.title = source.status || "ok";
+      dot.setAttribute("aria-label", "Status: " + (source.status || "ok"));
+      top.appendChild(dot);
+      item.appendChild(top);
+
+      var url = safeUrl(source.url);
+      var title = source.title || source.domain || source.url || "Untitled source";
+      var titleNode;
+      if (url) {
+        titleNode = make("a", "source-title", title);
+        titleNode.href = url;
+        titleNode.target = "_blank";
+        titleNode.rel = "noopener noreferrer";
+      } else {
+        titleNode = make("span", "source-title", title);
+      }
+      item.appendChild(titleNode);
+
+      var meta = make("div", "source-meta");
+      meta.appendChild(make("span", null, source.domain || ""));
+      meta.appendChild(make("span", "sep", "·"));
+      meta.appendChild(make("span", null, source.date || "date n/a"));
+      meta.appendChild(make("span", "sep", "·"));
+      meta.appendChild(make("span", "source-quotes", (source.quotes || 0) + " " + plural(source.quotes || 0, "quote", "quotes")));
+      item.appendChild(meta);
+
+      if (source.status && source.status !== "ok" && source.status !== "thin") {
+        var failure = failures[source.url];
+        var reason = failure ? failure.reason : (source.status + " before a quote");
+        item.appendChild(make("div", "source-reason", reason));
+      } else if (source.status === "thin") {
+        item.appendChild(make("div", "source-reason", "only title or description found"));
+      }
+      els.sources.appendChild(item);
+    });
+  }
+
+  function themeIds(board) {
+    if (!state.theme) { return null; }
+    var found = (board.themes || []).filter(function (theme) { return theme.term === state.theme; })[0];
+    return found ? found.quotes : [];
+  }
+
+  function renderQuotes() {
+    var board = state.board;
+    if (!board) { return; }
+    var byId = sourceIndex(board);
+    var allowed = themeIds(board);
+    var needle = state.filter;
+    var visible = (board.quotes || []).filter(function (quote) {
+      if (allowed && allowed.indexOf(quote.id) === -1) { return false; }
+      if (!needle) { return true; }
+      var source = byId[quote.source_id] || {};
+      var haystack = (quote.text + " " + (source.domain || "") + " " + (source.title || "") + " " + (source.via || "")).toLowerCase();
+      return haystack.indexOf(needle) !== -1;
+    });
+    state.visibleQuotes = visible;
+    state.active = -1;
+    clear(els.quotes);
+    els.quote_count.textContent = visible.length === (board.quotes || []).length
+      ? String(visible.length)
+      : visible.length + " of " + (board.quotes || []).length;
+
+    if (!visible.length) {
+      els.quote_empty.hidden = false;
+      els.quote_empty.textContent = (board.quotes || []).length
+        ? "No quote matches that filter."
+        : "No sentence met the quote rules. The failures are listed in Coverage.";
+      return;
+    }
+    els.quote_empty.hidden = true;
+
+    var fragment = document.createDocumentFragment();
+    visible.forEach(function (quote, index) {
+      var source = byId[quote.source_id] || {};
+      var card = make("article", "quote-card");
+      card.setAttribute("role", "listitem");
+      card.tabIndex = 0;
+      card.dataset.index = String(index);
+      card.setAttribute("aria-label", "Quote " + (index + 1) + " of " + visible.length);
+      card.appendChild(make("blockquote", "quote", quote.text));
+
+      var receipt = make("div", "receipt");
+      receipt.appendChild(make("span", "dash", "—"));
+      var url = safeUrl(source.url);
+      if (url) {
+        var link = make("a", null, source.domain || "source");
+        link.href = url;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.title = source.title || source.url;
+        receipt.appendChild(link);
+      } else {
+        receipt.appendChild(make("span", null, source.domain || "source"));
+      }
+      receipt.appendChild(make("span", "sep", "·"));
+      var date = make("time", null, source.date || "date n/a");
+      if (source.date) { date.dateTime = source.date; }
+      receipt.appendChild(date);
+      receipt.appendChild(make("span", "sep", "·"));
+      receipt.appendChild(make("span", "via", "via “" + (source.via || "") + "”"));
+
+      var copy = make("button", "copy", "copy");
+      copy.type = "button";
+      copy.setAttribute("aria-label", "Copy quote " + (index + 1));
+      copy.addEventListener("click", function (event) {
+        event.stopPropagation();
+        setActive(index, false);
+        copyQuote(index);
+      });
+      receipt.appendChild(copy);
+      card.appendChild(receipt);
+
+      card.addEventListener("click", function (event) {
+        if (event.target.closest("a, button")) { return; }
+        setActive(index, false);
+      });
+      card.addEventListener("keydown", function (event) {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          setActive(index, false);
+          copyQuote(index);
+        }
+      });
+      fragment.appendChild(card);
+    });
+    els.quotes.appendChild(fragment);
+  }
+
+  function setActive(index, focusCard) {
+    var cards = els.quotes.querySelectorAll(".quote-card");
+    if (!cards.length) { return; }
+    if (index < 0) { index = 0; }
+    if (index >= cards.length) { index = cards.length - 1; }
+    cards.forEach(function (card) { card.classList.remove("is-active"); });
+    var card = cards[index];
+    card.classList.add("is-active");
+    state.active = index;
+    if (focusCard) {
+      card.focus({ preventScroll: true });
+      card.scrollIntoView({ block: "nearest" });
+    }
+  }
+
+  function moveActive(delta) {
+    if (!state.visibleQuotes.length) { return; }
+    var next = state.active < 0 ? (delta > 0 ? 0 : state.visibleQuotes.length - 1) : state.active + delta;
+    setActive(next, true);
+  }
+
+  function copyText(text) {
+    return new Promise(function (resolve) {
+      var fallback = function () {
+        try {
+          var area = document.createElement("textarea");
+          area.value = text;
+          area.setAttribute("readonly", "");
+          area.style.position = "fixed";
+          area.style.top = "-1000px";
+          document.body.appendChild(area);
+          area.select();
+          var ok = document.execCommand("copy");
+          area.remove();
+          resolve(Boolean(ok));
+        } catch (error) {
+          resolve(false);
+        }
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () { resolve(true); }, fallback);
+      } else {
+        fallback();
+      }
+    });
+  }
+
+  function copyQuote(index) {
+    var quote = state.visibleQuotes[index];
+    if (!quote) { return; }
+    copyText(quote.text).then(function (ok) {
+      notice(ok ? "quote copied" : "copy failed, select the text instead");
+    });
+  }
+
+  /* ---------------------------------------------------------------- runs */
+
+  function selectedSources() {
+    return Array.prototype.slice.call(document.querySelectorAll('input[name="source"]:checked'))
+      .map(function (input) { return input.value; });
+  }
+
+  function startRun() {
+    if (state.static) {
+      notice("Static export. Install receipts and run the CLI for a live board.");
+      return;
+    }
+    if (state.demo) {
+      notice("This is a baked demo board. Run `receipts serve` for a live run.");
+      return;
+    }
+    if (state.running) { return; }
+    var question = (els.question.value || "").trim();
+    if (!question) {
+      els.question.focus();
+      notice("Type a question first.");
+      return;
+    }
+    var sources = selectedSources();
+    if (!sources.length) {
+      notice("Pick at least one source.");
+      return;
+    }
+    hideStates();
+    showWorking();
+    setRunning(true);
+    setStatus("Starting a run.");
+    clearTimeout(state.pollTimer);
+
+    fetch("/api/runs", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question: question, sources: sources, depth: 2 })
+    }).then(function (response) {
+      return response.json().then(function (data) {
+        if (!response.ok) { throw new Error(data && data.error ? data.error : "HTTP " + response.status); }
+        return data;
+      });
+    }).then(function (data) {
+      state.runId = data.id;
+      poll(data.id);
+    }).catch(function (error) {
+      showError("Could not start the run", error.message);
+    });
+  }
+
+  function poll(id) {
+    clearTimeout(state.pollTimer);
+    state.pollTimer = setTimeout(function () {
+      fetch("/api/runs/" + encodeURIComponent(id)).then(function (response) {
+        return response.json().then(function (data) {
+          if (!response.ok) { throw new Error(data && data.error ? data.error : "HTTP " + response.status); }
+          return data;
+        });
+      }).then(function (data) {
+        if (data.status === "running") {
+          updateProgress(data.progress || {});
+          poll(id);
+          return;
+        }
+        if (data.status === "done") {
+          renderBoard(data.board);
+          return;
+        }
+        throw new Error(data.error || "The run failed.");
+      }).catch(function (error) {
+        showError("The run stopped", error.message);
+      });
+    }, 400);
+  }
+
+  function updateProgress(progress) {
+    var queries = progress.queries || 0;
+    var queryTotal = progress.queries_total || 0;
+    var ok = progress.pages_ok || 0;
+    var failed = progress.pages_failed || 0;
+    var pagesTotal = progress.pages_total || 0;
+    var parts = [];
+    parts.push(queryTotal ? "queries " + queries + " / " + queryTotal : "queries " + queries);
+    parts.push("results " + (progress.hits || 0));
+    parts.push("pages " + ok + " ok / " + failed + " blocked");
+    if (progress.stage === "fetching" || progress.stage === "done") {
+      parts.push("quotes " + (progress.quotes || 0));
+    }
+    setStatus(parts.join(" · "));
+    var percent = 4;
+    if (progress.stage === "searching") {
+      percent = 6 + 44 * (queryTotal ? Math.min(1, queries / queryTotal) : 0);
+    } else if (progress.stage === "fetching") {
+      percent = 50 + 42 * (pagesTotal ? Math.min(1, (ok + failed) / pagesTotal) : 0);
+    } else if (progress.stage === "done") {
+      percent = 100;
+    }
+    setProgress(percent);
+  }
+
+  function downloadExport(fmt) {
+    if (state.static) {
+      notice("The static file carries its own JSON. Use the CLI for Markdown or HTML.");
+      return;
+    }
+    if (!state.board) { return; }
+    var href = state.demo
+      ? "/api/demo/export?fmt=" + encodeURIComponent(fmt)
+      : "/api/runs/" + encodeURIComponent(state.board.id) + "/export?fmt=" + encodeURIComponent(fmt);
+    var anchor = document.createElement("a");
+    anchor.href = href;
+    anchor.download = "";
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+  }
+
+  /* -------------------------------------------------------------- events */
+
+  function bindEvents() {
+    els.ask_form.addEventListener("submit", function (event) {
+      event.preventDefault();
+      startRun();
+    });
+    els.run.addEventListener("click", startRun);
+
+    document.querySelectorAll(".sample").forEach(function (button) {
+      button.addEventListener("click", function () {
+        els.question.value = button.dataset.q || "";
+        startRun();
+      });
+    });
+
+    els.filter.addEventListener("input", function () {
+      state.filter = (els.filter.value || "").trim().toLowerCase();
+      renderQuotes();
+    });
+    els.filter.addEventListener("keydown", function (event) {
+      if (event.key === "Escape") {
+        els.filter.value = "";
+        state.filter = "";
+        renderQuotes();
+        els.filter.blur();
+      }
+    });
+
+    [els.export_md, els.export_html, els.export_json].forEach(function (button) {
+      if (!button) { return; }
+      button.addEventListener("click", function () { downloadExport(button.dataset.fmt); });
+    });
+
+    els.error_retry.addEventListener("click", startRun);
+
+    document.addEventListener("keydown", function (event) {
+      if (event.metaKey || event.ctrlKey || event.altKey) { return; }
+      var tag = (event.target.tagName || "").toLowerCase();
+      var typing = tag === "input" || tag === "textarea" || event.target.isContentEditable;
+      if (event.key === "/" && !typing) {
+        event.preventDefault();
+        els.filter.focus();
+        return;
+      }
+      if (typing || !state.board) { return; }
+      if (event.key === "j") {
+        event.preventDefault();
+        moveActive(1);
+      } else if (event.key === "k") {
+        event.preventDefault();
+        moveActive(-1);
+      } else if (event.key === "c" && state.active >= 0) {
+        event.preventDefault();
+        copyQuote(state.active);
+      }
+    });
+  }
+
+  /* ----------------------------------------------------------------- boot */
+
+  function getJSON(url, options) {
+    return fetch(url, options).then(function (response) {
+      return response.json().then(function (data) {
+        if (!response.ok) {
+          throw new Error(data && data.error ? data.error : "HTTP " + response.status);
+        }
+        return data;
+      });
+    });
+  }
+
+  function boot() {
+    cacheDom();
+    bindEvents();
+    try {
+      var forced = new URLSearchParams(window.location.search).get("theme");
+      if (forced === "light" || forced === "dark") {
+        document.documentElement.setAttribute("data-theme", forced);
+      }
+    } catch (error) { /* very old browser, use the system theme */ }
+    var embedded = window.__RECEIPTS_BOARD__;
+    if (window.__RECEIPTS_STATIC__ && embedded) {
+      setStaticMode();
+      renderBoard(embedded);
+      return;
+    }
+    getJSON("/api/config").then(function (config) {
+      if (config && config.demo) {
+        setDemoMode();
+        return getJSON("/api/demo").then(function (board) {
+          if (!board) { throw new Error("The baked board is missing."); }
+          renderBoard(board);
+        });
+      }
+      showEmpty();
+      return null;
+    }).catch(function (error) {
+      if (state.demo || state.board) {
+        showError("Demo board unavailable", error.message);
+        return;
+      }
+      showError(
+        "No desk server",
+        "This page needs receipts serve or receipts demo. " +
+        "A static export carries its own board and works from disk. (" + error.message + ")"
+      );
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", boot);
+  } else {
+    boot();
+  }
+})();
+
+</script>
+</head>
+<body class="static-board">
+<a class="skip" href="#quotes">Skip to quotes</a>
+<div id="app" data-state="empty">
+
+  <header class="topbar">
+    <div class="masthead">
+      <p class="wordmark" aria-label="receipts">receipts<span class="wordmark-dot">.</span></p>
+      <p class="kicker">no model · no keys · every sentence is a quote</p>
+    </div>
+    <div class="topbar-controls">
+      <fieldset class="source-set" id="source-set">
+        <legend class="sr-only">Sources</legend>
+        <label class="source-chip"><input type="checkbox" name="source" value="web" checked><span>web</span></label>
+        <label class="source-chip"><input type="checkbox" name="source" value="news" checked><span>news</span></label>
+        <label class="source-chip"><input type="checkbox" name="source" value="reddit" checked><span>reddit</span></label>
+        <label class="source-chip"><input type="checkbox" name="source" value="hn" checked><span>hn</span></label>
+        <label class="source-chip"><input type="checkbox" name="source" value="wiki" checked><span>wiki</span></label>
+        <label class="source-chip"><input type="checkbox" name="source" value="arxiv" checked><span>arxiv</span></label>
+      </fieldset>
+      <button class="run" id="run" type="button">Run</button>
+    </div>
+  </header>
+
+  <section class="ask-wrap" aria-label="Ask a question">
+    <form class="ask" id="ask-form" role="search">
+      <label class="sr-only" for="question">Ask a question you want receipts for</label>
+      <input id="question" name="question" type="search" autocomplete="off" spellcheck="false"
+             placeholder="Ask a question you want receipts for" aria-describedby="ask-hint">
+      <span class="ask-hint" id="ask-hint">every sentence comes back with a URL, a date and the query that found it</span>
+    </form>
+  </section>
+
+  <div class="statusbar">
+    <div class="status-line">
+      <p class="status" id="status" role="status" aria-live="polite">Waiting for a question.</p>
+      <span class="demo-flag" id="demo-flag" hidden>demo board</span>
+    </div>
+    <div class="progress" id="progress" role="progressbar" aria-label="Run progress"
+         aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="progress-fill"></span></div>
+  </div>
+
+  <section class="empty" id="empty" aria-labelledby="empty-title">
+    <div class="empty-main">
+      <p class="eyebrow">A research desk with no author</p>
+      <h1 id="empty-title">Ask a question you want receipts for.</h1>
+      <p class="empty-copy">
+        It searches six free sources, fetches the pages, and hands back the sentences
+        that were already written there. No summary, no paraphrase, no model in the loop.
+      </p>
+      <div class="samples" aria-label="Example questions">
+        <button class="sample" type="button" data-q="why do AI coding agents waste context window">why do AI coding agents waste context window</button>
+        <button class="sample" type="button" data-q="what breaks when you self-host a search index">what breaks when you self-host a search index</button>
+        <button class="sample" type="button" data-q="is remote work bad for junior engineers">is remote work bad for junior engineers</button>
+      </div>
+    </div>
+    <aside class="empty-side" aria-label="How it works">
+      <ol class="how">
+        <li><span class="how-n">01</span><span class="how-t">Searches six keyless sources</span></li>
+        <li><span class="how-n">02</span><span class="how-t">Fetches the pages, drops the chrome</span></li>
+        <li><span class="how-n">03</span><span class="how-t">Keeps 20–45 word quotes, verbatim</span></li>
+        <li><span class="how-n">04</span><span class="how-t">Lists every failure instead of hiding it</span></li>
+      </ol>
+      <p class="empty-note mono">same question, same sources, same board</p>
+    </aside>
+  </section>
+
+  <section class="working" id="working" aria-live="polite" hidden>
+    <div class="working-main">
+      <p class="eyebrow">Working</p>
+      <h2>Reading the web.</h2>
+      <p class="working-copy">Six sources, one query at a time. Nothing is written for you while you wait.</p>
+    </div>
+    <div class="working-lines" aria-hidden="true">
+      <span></span><span></span><span></span><span></span>
+    </div>
+  </section>
+
+  <section class="error-state" id="error" hidden aria-labelledby="error-title">
+    <p class="eyebrow">Run stopped</p>
+    <h2 id="error-title">The run stopped.</h2>
+    <p class="error-message" id="error-message"></p>
+    <button class="ghost" id="error-retry" type="button">Try again</button>
+  </section>
+
+  <main class="board" id="board" hidden>
+    <aside class="coverage" aria-labelledby="coverage-h">
+      <div class="panel-head">
+        <h2 class="eyebrow" id="coverage-h">Coverage</h2>
+        <span class="mono run-id" id="run-id"></span>
+      </div>
+      <div class="stats">
+        <div class="stat"><span class="stat-num" id="stat-sources">0</span><span class="stat-label">sources</span></div>
+        <div class="stat"><span class="stat-num" id="stat-quotes">0</span><span class="stat-label">quotes</span></div>
+        <div class="stat"><span class="stat-num" id="stat-domains">0</span><span class="stat-label">domains</span></div>
+        <div class="stat"><span class="stat-num" id="stat-seconds">0</span><span class="stat-label">seconds</span></div>
+      </div>
+      <div class="stamp" aria-hidden="true"><span>NO MODEL</span><span>NO KEYS</span><span>EVIDENCE ONLY</span></div>
+      <section class="kind-block" aria-labelledby="kinds-h">
+        <h3 class="eyebrow" id="kinds-h">By source</h3>
+        <ul class="kinds" id="kinds"></ul>
+      </section>
+      <section class="theme-block" aria-labelledby="themes-h">
+        <h3 class="eyebrow" id="themes-h">Themes</h3>
+        <div class="themes" id="themes"></div>
+      </section>
+      <section class="failure-block" aria-labelledby="failures-h">
+        <h3 class="eyebrow" id="failures-h">Failures <span class="count" id="failure-count"></span></h3>
+        <ul class="failures" id="failures"></ul>
+      </section>
+    </aside>
+
+    <section class="quotes-col" aria-labelledby="quotes-h">
+      <div class="quotes-head">
+        <div class="panel-head">
+          <h2 class="eyebrow" id="quotes-h">Quotes</h2>
+          <span class="count" id="quote-count"></span>
+        </div>
+        <label class="filter">
+          <span class="sr-only">Filter quotes</span>
+          <input id="filter" type="search" placeholder="filter quotes" autocomplete="off">
+        </label>
+      </div>
+      <div class="quotes" id="quotes" role="list"></div>
+      <p class="quote-empty" id="quote-empty" hidden>No quote matches that filter.</p>
+      <p class="key-hint mono">j / k move · c copy · / filter</p>
+    </section>
+
+    <aside class="sources-col" aria-labelledby="sources-h">
+      <div class="panel-head">
+        <h2 class="eyebrow" id="sources-h">Sources</h2>
+        <span class="count" id="source-count"></span>
+      </div>
+      <ol class="sources" id="sources"></ol>
+    </aside>
+  </main>
+
+  <div class="exportbar" id="exportbar" hidden>
+    <span class="eyebrow">Export the board</span>
+    <button class="ghost" id="export-md" type="button" data-fmt="md">Markdown</button>
+    <button class="ghost" id="export-html" type="button" data-fmt="html">HTML</button>
+    <button class="ghost" id="export-json" type="button" data-fmt="json">JSON</button>
+  </div>
+
+  <footer class="strip" id="strip">No board yet. Ask a question above.</footer>
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+</div>
+<noscript>
+  <p class="noscript">The desk renders the board with JavaScript. Every board is also available as JSON, Markdown and a static HTML file from the CLI.</p>
+</noscript>
+</body>
+</html>

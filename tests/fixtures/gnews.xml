@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+<channel>
+  <title>"why do AI coding agents waste context window" - Google News</title>
+  <link>https://news.google.com/search?q=context</link>
+  <item>
+    <title>Why coding agents lose the thread - Example News</title>
+    <link>https://news.google.com/rss/articles/CBMiAAAA?oc=5</link>
+    <pubDate>Fri, 20 Nov 2026 11:48:00 GMT</pubDate>
+    <source url="https://www.example.com">Example News</source>
+  </item>
+  <item>
+    <title>Context is the new memory - Example Tech</title>
+    <link>https://news.google.com/rss/articles/CBMiBBBB?oc=5</link>
+    <pubDate>Thu, 19 Nov 2026 08:15:00 GMT</pubDate>
+    <source url="https://www.example.org">Example Tech</source>
+  </item>
+</channel>
+</rss>

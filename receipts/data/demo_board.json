@@ -1,0 +1,485 @@
+{
+  "id": "r-20261121-152429",
+  "question": "why do AI coding agents waste context window",
+  "started_at": "2026-11-21T15:24:29Z",
+  "finished_at": "2026-11-21T15:24:38Z",
+  "seconds": 8.758,
+  "coverage": {
+    "queries": 9,
+    "hits": 66,
+    "pages_ok": 11,
+    "pages_failed": 1,
+    "quotes": 25
+  },
+  "sources": [
+    {
+      "id": "s1",
+      "url": "https://www.infoworld.com/article/4251051/ai-coding-agents-need-a-safe-place-to-work-eclipse-is-building-the-sandbox-to-give-it-to-them.html",
+      "title": "AI coding agents need a safe place to work; Eclipse is building the sandbox to give it to them | InfoWorld",
+      "domain": "infoworld.com",
+      "date": "2026-11-19",
+      "kind": "news",
+      "status": "ok",
+      "quotes": 3,
+      "via": "ai coding agents"
+    },
+    {
+      "id": "s2",
+      "url": "https://www.forbes.com/sites/victordey/2026/11/19/slack-evp-says-ai-coding-agents-need-the-conversation-behind-the-code/",
+      "title": "Slack EVP Says AI Coding Agents Need The Conversation Behind The Code",
+      "domain": "forbes.com",
+      "date": "2026-11-18",
+      "kind": "news",
+      "status": "blocked",
+      "quotes": 0,
+      "via": "ai coding agents"
+    },
+    {
+      "id": "s3",
+      "url": "https://note.com/yesterdayintech/n/n630658f56db2?hl=en",
+      "title": "10 IT News Picks for November 18 | Challenges and Efficiency in the Era of AI Coding Agents｜Yesterday in Tech｜きのうのITニュース",
+      "domain": "note.com",
+      "date": "2026-11-18",
+      "kind": "news",
+      "status": "ok",
+      "quotes": 3,
+      "via": "ai coding agents"
+    },
+    {
+      "id": "s4",
+      "url": "https://venturebeat.com/data/companies-are-building-governed-semantic-layers-most-say-their-ai-agents-are-getting-context-somewhere-else",
+      "title": "Companies are building governed semantic layers. Most say their AI agents are getting context somewhere else | VentureBeat",
+      "domain": "venturebeat.com",
+      "date": "2026-10-06",
+      "kind": "news",
+      "status": "ok",
+      "quotes": 3,
+      "via": "ai coding agents waste context window"
+    },
+    {
+      "id": "s5",
+      "url": "http://arxiv.org/abs/2604.02544v3",
+      "title": "[2604.02544v3] Developer Experience with AI Coding Agents: HTTP Behavioral Signatures in Documentation Portals",
+      "domain": "arxiv.org",
+      "date": "2026-04-02",
+      "kind": "arxiv",
+      "status": "ok",
+      "quotes": 3,
+      "via": "ai coding agents waste context window"
+    },
+    {
+      "id": "s6",
+      "url": "https://vexp.dev",
+      "title": "vexp — The Reliability Layer for AI Coding Agents",
+      "domain": "vexp.dev",
+      "date": "2026-02-24",
+      "kind": "hn",
+      "status": "ok",
+      "quotes": 1,
+      "via": "\"why do AI coding agents waste context window\""
+    },
+    {
+      "id": "s7",
+      "url": "https://news.ycombinator.com/item?id=47123966",
+      "title": "Show HN: Vexp – Local-first context engine for AI coding agents | Hacker News",
+      "domain": "news.ycombinator.com",
+      "date": "2026-02-23",
+      "kind": "hn",
+      "status": "ok",
+      "quotes": 1,
+      "via": "\"why do AI coding agents waste context window\""
+    },
+    {
+      "id": "s8",
+      "url": "https://news.ycombinator.com/item?id=47113273",
+      "title": "Show HN: Vexp – graph-RAG context engine, 65-70% fewer tokens for AI agents | Hacker News",
+      "domain": "news.ycombinator.com",
+      "date": "2026-02-22",
+      "kind": "hn",
+      "status": "ok",
+      "quotes": 3,
+      "via": "\"why do AI coding agents waste context window\""
+    },
+    {
+      "id": "s9",
+      "url": "http://arxiv.org/abs/2602.14690v5",
+      "title": "[2602.14690v5] Harness Engineering for Agentic AI Coding Tools: An Exploratory Study",
+      "domain": "arxiv.org",
+      "date": "2026-02-16",
+      "kind": "arxiv",
+      "status": "ok",
+      "quotes": 3,
+      "via": "ai coding agents waste context window"
+    },
+    {
+      "id": "s10",
+      "url": "https://github.com/meghendra6/cgrep",
+      "title": "GitHub - meghendra6/cgrep · GitHub",
+      "domain": "github.com",
+      "date": "2026-02-14",
+      "kind": "hn",
+      "status": "ok",
+      "quotes": 0,
+      "via": "\"why do AI coding agents waste context window\""
+    },
+    {
+      "id": "s11",
+      "url": "http://arxiv.org/abs/2510.09567v1",
+      "title": "[2510.09567v1] Safe, Untrusted, \"Proof-Carrying\" AI Agents: toward the agentic lakehouse",
+      "domain": "arxiv.org",
+      "date": "2025-10-10",
+      "kind": "arxiv",
+      "status": "ok",
+      "quotes": 2,
+      "via": "ai coding agents waste context window"
+    },
+    {
+      "id": "s12",
+      "url": "http://arxiv.org/abs/2511.02841v2",
+      "title": "[2511.02841v2] AI Agents with Decentralized Identifiers and Verifiable Credentials",
+      "domain": "arxiv.org",
+      "date": "2025-10-01",
+      "kind": "arxiv",
+      "status": "ok",
+      "quotes": 3,
+      "via": "ai coding agents"
+    }
+  ],
+  "quotes": [
+    {
+      "id": "q1",
+      "text": "AI coding tools are moving beyond copilots that make suggestions to independent, autonomous agents that execute terminal commands, write and modify software, run tests, and install dependencies.",
+      "source_id": "s1",
+      "score": 0.525,
+      "terms": [
+        "ai",
+        "coding",
+        "agents"
+      ]
+    },
+    {
+      "id": "q2",
+      "text": "Developers can use the vendor-neutral platform to test various autonomous AI coding tools in isolated environments, with explicitly defined access to files, credentials, and networks.",
+      "source_id": "s1",
+      "score": 0.398,
+      "terms": [
+        "ai",
+        "coding"
+      ]
+    },
+    {
+      "id": "q3",
+      "text": "Ultimately, the project highlights what the Eclipse Foundation considers a much bigger issue: Who controls the infrastructure that AI agents rely on.",
+      "source_id": "s1",
+      "score": 0.347,
+      "terms": [
+        "ai",
+        "agents"
+      ]
+    },
+    {
+      "id": "q4",
+      "text": "While AI coding agents are being rapidly adopted in development environments, challenges regarding security risks and computational efficiency are becoming apparent.",
+      "source_id": "s3",
+      "score": 0.554,
+      "terms": [
+        "ai",
+        "coding",
+        "agents"
+      ]
+    },
+    {
+      "id": "q5",
+      "text": "Furthermore, based on the development of Quake, the article presents the perspective of how creative problem-solving by humans, rather than AI coding agents, is crucial.",
+      "source_id": "s3",
+      "score": 0.519,
+      "terms": [
+        "ai",
+        "coding",
+        "agents"
+      ]
+    },
+    {
+      "id": "q6",
+      "text": "It is an open-source plugin that allows AI coding agents to learn from past sessions and achieve cost reductions while maintaining execution success.",
+      "source_id": "s3",
+      "score": 0.499,
+      "terms": [
+        "ai",
+        "coding",
+        "agents"
+      ]
+    },
+    {
+      "id": "q7",
+      "text": "Long-context loading, pasting a large set of documents or records straight into the model's context window, was named by 19%.",
+      "source_id": "s4",
+      "score": 0.401,
+      "terms": [
+        "context",
+        "window"
+      ]
+    },
+    {
+      "id": "q8",
+      "text": "The company's Cortex AI Gateway, which auto-routes a task to a smaller model first and escalates only when needed, depends on the task arriving with context already prepared.",
+      "source_id": "s4",
+      "score": 0.339,
+      "terms": [
+        "ai",
+        "context"
+      ]
+    },
+    {
+      "id": "q9",
+      "text": "Baris Gultekin, Snowflake's vice president of AI, explained in August that without good context, a model has to do the exploratory work itself, writing and testing SQL, searching through data and retrying when something doesn't work, a process that's expensive and typically needs a more …",
+      "source_id": "s4",
+      "score": 0.315,
+      "terms": [
+        "ai",
+        "context"
+      ]
+    },
+    {
+      "id": "q10",
+      "text": "Abstract:The rapid adoption of AI coding agents and AI assistant web services is fundamentally changing how developers discover, consume, and interact with technical documentation.",
+      "source_id": "s5",
+      "score": 0.525,
+      "terms": [
+        "ai",
+        "coding",
+        "agents"
+      ]
+    },
+    {
+      "id": "q11",
+      "text": "We present an empirical study of HTTP request fingerprints from nine AI coding agents (Aider, Antigravity, Claude Code, Cline, Cursor, Junie, OpenCode, GitHub Copilot (VS Code agent mode), and Windsurf) and six AI assistant services (ChatGPT, Claude, Google Gemini, Google NotebookLM, MistralAI, and Perplexity) accessing …",
+      "source_id": "s5",
+      "score": 0.471,
+      "terms": [
+        "ai",
+        "coding",
+        "agents"
+      ]
+    },
+    {
+      "id": "q12",
+      "text": "Our study shows that AI agent access compresses multi-page navigation into a single or two requests, making traditional engagement metrics - session depth, time-on-page, click path, and bounce rate - unreliable indicators of actual documentation consumption.",
+      "source_id": "s5",
+      "score": 0.249,
+      "terms": [
+        "ai"
+      ]
+    },
+    {
+      "id": "q13",
+      "text": "Pro at $19 for professionals, Team at $29 per seat with shared context and analytics, and the Enterprise SDK when your fleet or pipeline needs the engine itself.",
+      "source_id": "s6",
+      "score": 0.22,
+      "terms": [
+        "context"
+      ]
+    },
+    {
+      "id": "q14",
+      "text": "- When an agent requests context, vexp serves a token-budgeted \"capsule\" containing only the relevant nodes: the target function, its callers, imported types, cross-file dependencies — not entire files",
+      "source_id": "s7",
+      "score": 0.251,
+      "terms": [
+        "context"
+      ]
+    },
+    {
+      "id": "q15",
+      "text": "When you ask Claude Code or Cursor to fix a bug, they typically grep around, cat a bunch of files, and dump thousands of lines into the context.",
+      "source_id": "s8",
+      "score": 0.274,
+      "terms": [
+        "context"
+      ]
+    },
+    {
+      "id": "q16",
+      "text": "The result is a compact \"context capsule\" that gives the agent everything it needs in ~2k-4k tokens instead of 15-20k.",
+      "source_id": "s8",
+      "score": 0.261,
+      "terms": [
+        "context"
+      ]
+    },
+    {
+      "id": "q17",
+      "text": "vexp is a local-first context engine that builds a semantic graph of your codebase (AST + call graph + import graph + change coupling from git history), then uses a hybrid search — keyword matching (FTS5 BM25), TF-IDF cosine similarity, and graph centrality — to …",
+      "source_id": "s8",
+      "score": 0.256,
+      "terms": [
+        "context"
+      ]
+    },
+    {
+      "id": "q18",
+      "text": "We present a systematic analysis of configuration mechanisms for agentic AI coding tools, covering Claude Code, GitHub Copilot, Cursor, Gemini, and Codex.",
+      "source_id": "s9",
+      "score": 0.402,
+      "terms": [
+        "ai",
+        "coding"
+      ]
+    },
+    {
+      "id": "q19",
+      "text": "First, Context Files dominate the configuration landscape and are often the sole mechanism in a repository, with AGENTS$.$md emerging as an interoperable standard across tools.",
+      "source_id": "s9",
+      "score": 0.384,
+      "terms": [
+        "agents",
+        "context"
+      ]
+    },
+    {
+      "id": "q20",
+      "text": "We identify eight configuration mechanisms spanning from static context to executable and external integrations and, in an empirical study of 2,853 GitHub repositories, examine whether and how they are adopted, with a detailed analysis of Context Files, Skills, and Subagents.",
+      "source_id": "s9",
+      "score": 0.248,
+      "terms": [
+        "context"
+      ]
+    },
+    {
+      "id": "q21",
+      "text": "Our prototype demonstrates that untrusted AI agents can operate safely on production data and outlines a path toward a fully agentic lakehouse.",
+      "source_id": "s11",
+      "score": 0.394,
+      "terms": [
+        "ai",
+        "agents"
+      ]
+    },
+    {
+      "id": "q22",
+      "text": "Using Bauplan as a case study, we show how data branching and declarative environments extend naturally to agents, enabling reproducibility and observability while reducing the attack surface.",
+      "source_id": "s11",
+      "score": 0.26,
+      "terms": [
+        "agents"
+      ]
+    },
+    {
+      "id": "q23",
+      "text": "Abstract:A fundamental limitation of current LLM-based AI agents is their inability to build differentiated trust among each other at the onset of an agent-to-agent dialogue.",
+      "source_id": "s12",
+      "score": 0.388,
+      "terms": [
+        "ai",
+        "agents"
+      ]
+    },
+    {
+      "id": "q24",
+      "text": "A promising way to fill this gap in Agentic AI is to equip agents with long-lived digital identities and introduce tamper-proof and flexible identity-bound attestations of agents, provisioned by commonly trusted third parties and designed for cross-domain verifiability.",
+      "source_id": "s12",
+      "score": 0.364,
+      "terms": [
+        "ai",
+        "agents"
+      ]
+    },
+    {
+      "id": "q25",
+      "text": "However, autonomous and interoperable trust establishment becomes essential once agents start to operate beyond isolated environments and engage in dialogues across individual or organizational boundaries.",
+      "source_id": "s12",
+      "score": 0.268,
+      "terms": [
+        "agents"
+      ]
+    }
+  ],
+  "themes": [
+    {
+      "term": "agents",
+      "count": 13,
+      "quotes": [
+        "q1",
+        "q3",
+        "q4",
+        "q5",
+        "q6",
+        "q10",
+        "q11",
+        "q19",
+        "q21",
+        "q22",
+        "q23",
+        "q24",
+        "q25"
+      ]
+    },
+    {
+      "term": "context",
+      "count": 10,
+      "quotes": [
+        "q7",
+        "q8",
+        "q9",
+        "q13",
+        "q14",
+        "q15",
+        "q16",
+        "q17",
+        "q19",
+        "q20"
+      ]
+    },
+    {
+      "term": "coding",
+      "count": 8,
+      "quotes": [
+        "q1",
+        "q2",
+        "q4",
+        "q5",
+        "q6",
+        "q10",
+        "q11",
+        "q18"
+      ]
+    },
+    {
+      "term": "files",
+      "count": 5,
+      "quotes": [
+        "q2",
+        "q14",
+        "q15",
+        "q19",
+        "q20"
+      ]
+    },
+    {
+      "term": "claude code",
+      "count": 3,
+      "quotes": [
+        "q11",
+        "q15",
+        "q18"
+      ]
+    },
+    {
+      "term": "agent",
+      "count": 4,
+      "quotes": [
+        "q11",
+        "q12",
+        "q14",
+        "q16"
+      ]
+    }
+  ],
+  "failures": [
+    {
+      "url": "https://www.forbes.com/sites/victordey/2026/11/19/slack-evp-says-ai-coding-agents-need-the-conversation-behind-the-code/",
+      "reason": "403",
+      "stage": "fetch"
+    }
+  ]
+}

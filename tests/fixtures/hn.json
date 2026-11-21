@@ -1,0 +1,29 @@
+{
+  "hits": [
+    {
+      "objectID": "39000001",
+      "title": "Ask HN: how do you keep agent context small?",
+      "url": null,
+      "story_text": "I keep a plan file and start a fresh thread. <p>What else works?</p>",
+      "created_at": "2026-11-19T10:00:00.000Z",
+      "points": 120
+    },
+    {
+      "objectID": "39000002",
+      "title": "Why context windows fill up",
+      "url": "https://www.example.com/context-window",
+      "story_text": null,
+      "created_at": "2026-11-18T09:30:00.000Z",
+      "points": 87
+    },
+    {
+      "objectID": "39000003",
+      "title": "",
+      "story_title": "A smaller working set",
+      "url": "https://docs.example.org/agents/context",
+      "created_at": "2026-11-17T08:00:00.000Z",
+      "points": 12
+    }
+  ],
+  "nbHits": 3
+}

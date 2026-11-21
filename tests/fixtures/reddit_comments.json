@@ -1,0 +1,25 @@
+{
+  "data": [
+    {
+      "id": "c1",
+      "body": "The context window is not free, and every token you keep for a failed attempt costs money on the next call as well as the current one.",
+      "score": 120,
+      "created_utc": 1763633000,
+      "author": "someone"
+    },
+    {
+      "id": "c2",
+      "body": "[deleted]",
+      "score": 4,
+      "created_utc": 1763633100,
+      "author": "[deleted]"
+    },
+    {
+      "id": "c3",
+      "body": "I keep the task, the current diff and the last error, then throw away the rest of the transcript before the next request is made.",
+      "score": 64,
+      "created_utc": 1763633200,
+      "author": "another"
+    }
+  ]
+}

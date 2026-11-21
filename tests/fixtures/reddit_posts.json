@@ -1,0 +1,24 @@
+{
+  "data": [
+    {
+      "id": "abc123",
+      "subreddit": "LocalLLaMA",
+      "title": "Context window waste is the real cost of coding agents",
+      "permalink": "/r/LocalLLaMA/comments/abc123/context_window_waste/",
+      "created_utc": 1763632800,
+      "score": 412,
+      "num_comments": 57,
+      "selftext": "Everyone talks about model quality but my bill is mostly context."
+    },
+    {
+      "id": "def456",
+      "subreddit": "programming",
+      "title": "Ask: what do you keep in an agent's context?",
+      "permalink": "/r/programming/comments/def456/what_do_you_keep/",
+      "created_utc": 1763546400,
+      "score": 88,
+      "num_comments": 12,
+      "selftext": ""
+    }
+  ]
+}

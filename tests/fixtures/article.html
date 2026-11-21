@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <title>Why coding agents run out of context - Example News</title>
+  <meta property="article:published_time" content="2026-11-04T09:30:00Z">
+  <meta name="description" content="A report on why long-running coding agents lose track of the task.">
+</head>
+<body>
+  <header class="site-header">
+    <nav><a href="/">Home</a><a href="/tech">Tech</a><a href="/about">About</a></nav>
+  </header>
+  <div class="cookie-banner">We use cookies. Accept all cookies to continue.</div>
+  <main>
+    <article class="article-body">
+      <h1>Why coding agents run out of context</h1>
+      <p class="byline">By A. Reporter, 4 November 2026</p>
+      <p>Every long-running coding agent eventually hits the same wall, and the wall is not intelligence but the size of the context window it has to carry between edits and tool calls.</p>
+      <p>When an agent keeps every failed attempt in its prompt, the useful part of the conversation gets diluted, and the model starts repeating mistakes that were already corrected several steps earlier in the run.</p>
+      <p>The practical fix is not a bigger model but a smaller working set: keep the task, the current files and the last error, and drop the transcripts of attempts that no longer matter to the next action.</p>
+      <p>Teams that measured this found that trimming the history cut token spend by roughly half without changing the number of successful patches, which suggests most of the context was never doing any work.</p>
+      <div class="share-tools"><a href="/share">Share this article</a><a href="/email">Email</a></div>
+      <aside class="related"><h2>Related</h2><p>Ten more stories about agents that we think you will enjoy reading next.</p></aside>
+    </article>
+  </main>
+  <footer><p>Copyright Example News. All rights reserved. Privacy policy.</p></footer>
+  <script>window.analytics = {page: "article"};</script>
+</body>
+</html>

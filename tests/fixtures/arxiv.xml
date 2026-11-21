@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>ArXiv Query: search_query=all:context window</title>
+  <entry>
+    <id>http://arxiv.org/abs/2411.00001v1</id>
+    <updated>2026-11-15T12:00:00Z</updated>
+    <published>2026-11-14T12:00:00Z</published>
+    <title>Context pruning for long-running coding agents</title>
+    <summary>We study how coding agents lose information as their transcripts grow, and show that pruning old tool output preserves task success while cutting token use in half.</summary>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2411.00002v1</id>
+    <updated>2026-11-10T12:00:00Z</updated>
+    <published>2026-11-09T12:00:00Z</published>
+    <title>A survey of agent memory</title>
+    <summary>A short survey. Nothing else.</summary>
+  </entry>
+</feed>

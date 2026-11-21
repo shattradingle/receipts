@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "receipts"
+version = "1.0.0"
+description = "A research desk that cannot hallucinate: verbatim quotes with receipts"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+authors = [{name = "ExotericTar", email = "206703453+ExotericTar@users.noreply.github.com"}]
+keywords = ["research", "quotes", "mcp", "keyless", "no-api-key", "stdlib"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+]
+
+[project.scripts]
+receipts = "receipts.cli:main"
+
+[project.optional-dependencies]
+dev = ["pytest>=7"]
+
+[tool.setuptools.packages.find]
+include = ["receipts*"]
+
+[tool.setuptools.package-data]
+receipts = ["data/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"

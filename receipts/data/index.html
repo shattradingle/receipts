@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f7f5f0">
+<meta name="description" content="A local research desk that cannot hallucinate: verbatim quotes, each with its URL, date and the query that found it.">
+<title>receipts · the research desk with no author</title>
+<script>
+/* resolve ?theme= before first paint so the page does not flash the system theme */
+(function () {
+  try {
+    var t = new URLSearchParams(window.location.search).get("theme");
+    if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t);
+  } catch (e) { /* fall back to the system theme */ }
+})();
+</script>
+<link rel="stylesheet" href="app.css" data-receipts-asset="css">
+<script src="app.js" data-receipts-asset="js" defer></script>
+</head>
+<body>
+<a class="skip" href="#quotes">Skip to quotes</a>
+<div id="app" data-state="empty">
+
+  <header class="topbar">
+    <div class="masthead">
+      <p class="wordmark" aria-label="receipts">receipts<span class="wordmark-dot">.</span></p>
+      <p class="kicker">no model · no keys · every sentence is a quote</p>
+    </div>
+    <div class="topbar-controls">
+      <fieldset class="source-set" id="source-set">
+        <legend class="sr-only">Sources</legend>
+        <label class="source-chip"><input type="checkbox" name="source" value="web" checked><span>web</span></label>
+        <label class="source-chip"><input type="checkbox" name="source" value="news" checked><span>news</span></label>
+        <label class="source-chip"><input type="checkbox" name="source" value="reddit" checked><span>reddit</span></label>
+        <label class="source-chip"><input type="checkbox" name="source" value="hn" checked><span>hn</span></label>
+        <label class="source-chip"><input type="checkbox" name="source" value="wiki" checked><span>wiki</span></label>
+        <label class="source-chip"><input type="checkbox" name="source" value="arxiv" checked><span>arxiv</span></label>
+      </fieldset>
+      <button class="run" id="run" type="button">Run</button>
+    </div>
+  </header>
+
+  <section class="ask-wrap" aria-label="Ask a question">
+    <form class="ask" id="ask-form" role="search">
+      <label class="sr-only" for="question">Ask a question you want receipts for</label>
+      <input id="question" name="question" type="search" autocomplete="off" spellcheck="false"
+             placeholder="Ask a question you want receipts for" aria-describedby="ask-hint">
+      <span class="ask-hint" id="ask-hint">every sentence comes back with a URL, a date and the query that found it</span>
+    </form>
+  </section>
+
+  <div class="statusbar">
+    <div class="status-line">
+      <p class="status" id="status" role="status" aria-live="polite">Waiting for a question.</p>
+      <span class="demo-flag" id="demo-flag" hidden>demo board</span>
+    </div>
+    <div class="progress" id="progress" role="progressbar" aria-label="Run progress"
+         aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="progress-fill"></span></div>
+  </div>
+
+  <section class="empty" id="empty" aria-labelledby="empty-title">
+    <div class="empty-main">
+      <p class="eyebrow">A research desk with no author</p>
+      <h1 id="empty-title">Ask a question you want receipts for.</h1>
+      <p class="empty-copy">
+        It searches six free sources, fetches the pages, and hands back the sentences
+        that were already written there. No summary, no paraphrase, no model in the loop.
+      </p>
+      <div class="samples" aria-label="Example questions">
+        <button class="sample" type="button" data-q="why do AI coding agents waste context window">why do AI coding agents waste context window</button>
+        <button class="sample" type="button" data-q="what breaks when you self-host a search index">what breaks when you self-host a search index</button>
+        <button class="sample" type="button" data-q="is remote work bad for junior engineers">is remote work bad for junior engineers</button>
+      </div>
+    </div>
+    <aside class="empty-side" aria-label="How it works">
+      <ol class="how">
+        <li><span class="how-n">01</span><span class="how-t">Searches six keyless sources</span></li>
+        <li><span class="how-n">02</span><span class="how-t">Fetches the pages, drops the chrome</span></li>
+        <li><span class="how-n">03</span><span class="how-t">Keeps 20–45 word quotes, verbatim</span></li>
+        <li><span class="how-n">04</span><span class="how-t">Lists every failure instead of hiding it</span></li>
+      </ol>
+      <p class="empty-note mono">same question, same sources, same board</p>
+    </aside>
+  </section>
+
+  <section class="working" id="working" aria-live="polite" hidden>
+    <div class="working-main">
+      <p class="eyebrow">Working</p>
+      <h2>Reading the web.</h2>
+      <p class="working-copy">Six sources, one query at a time. Nothing is written for you while you wait.</p>
+    </div>
+    <div class="working-lines" aria-hidden="true">
+      <span></span><span></span><span></span><span></span>
+    </div>
+  </section>
+
+  <section class="error-state" id="error" hidden aria-labelledby="error-title">
+    <p class="eyebrow">Run stopped</p>
+    <h2 id="error-title">The run stopped.</h2>
+    <p class="error-message" id="error-message"></p>
+    <button class="ghost" id="error-retry" type="button">Try again</button>
+  </section>
+
+  <main class="board" id="board" hidden>
+    <aside class="coverage" aria-labelledby="coverage-h">
+      <div class="panel-head">
+        <h2 class="eyebrow" id="coverage-h">Coverage</h2>
+        <span class="mono run-id" id="run-id"></span>
+      </div>
+      <div class="stats">
+        <div class="stat"><span class="stat-num" id="stat-sources">0</span><span class="stat-label">sources</span></div>
+        <div class="stat"><span class="stat-num" id="stat-quotes">0</span><span class="stat-label">quotes</span></div>
+        <div class="stat"><span class="stat-num" id="stat-domains">0</span><span class="stat-label">domains</span></div>
+        <div class="stat"><span class="stat-num" id="stat-seconds">0</span><span class="stat-label">seconds</span></div>
+      </div>
+      <div class="stamp" aria-hidden="true"><span>NO MODEL</span><span>NO KEYS</span><span>EVIDENCE ONLY</span></div>
+      <section class="kind-block" aria-labelledby="kinds-h">
+        <h3 class="eyebrow" id="kinds-h">By source</h3>
+        <ul class="kinds" id="kinds"></ul>
+      </section>
+      <section class="theme-block" aria-labelledby="themes-h">
+        <h3 class="eyebrow" id="themes-h">Themes</h3>
+        <div class="themes" id="themes"></div>
+      </section>
+      <section class="failure-block" aria-labelledby="failures-h">
+        <h3 class="eyebrow" id="failures-h">Failures <span class="count" id="failure-count"></span></h3>
+        <ul class="failures" id="failures"></ul>
+      </section>
+    </aside>
+
+    <section class="quotes-col" aria-labelledby="quotes-h">
+      <div class="quotes-head">
+        <div class="panel-head">
+          <h2 class="eyebrow" id="quotes-h">Quotes</h2>
+          <span class="count" id="quote-count"></span>
+        </div>
+        <label class="filter">
+          <span class="sr-only">Filter quotes</span>
+          <input id="filter" type="search" placeholder="filter quotes" autocomplete="off">
+        </label>
+      </div>
+      <div class="quotes" id="quotes" role="list"></div>
+      <p class="quote-empty" id="quote-empty" hidden>No quote matches that filter.</p>
+      <p class="key-hint mono">j / k move · c copy · / filter</p>
+    </section>
+
+    <aside class="sources-col" aria-labelledby="sources-h">
+      <div class="panel-head">
+        <h2 class="eyebrow" id="sources-h">Sources</h2>
+        <span class="count" id="source-count"></span>
+      </div>
+      <ol class="sources" id="sources"></ol>
+    </aside>
+  </main>
+
+  <div class="exportbar" id="exportbar" hidden>
+    <span class="eyebrow">Export the board</span>
+    <button class="ghost" id="export-md" type="button" data-fmt="md">Markdown</button>
+    <button class="ghost" id="export-html" type="button" data-fmt="html">HTML</button>
+    <button class="ghost" id="export-json" type="button" data-fmt="json">JSON</button>
+  </div>
+
+  <footer class="strip" id="strip">No board yet. Ask a question above.</footer>
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+</div>
+<noscript>
+  <p class="noscript">The desk renders the board with JavaScript. Every board is also available as JSON, Markdown and a static HTML file from the CLI.</p>
+</noscript>
+</body>
+</html>

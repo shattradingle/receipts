@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Managing context - Example Docs</title>
+</head>
+<body>
+  <div id="sidebar" class="sidebar">
+    <h2>Contents</h2>
+    <ul><li><a href="/a">Install</a></li><li><a href="/b">Configure</a></li><li><a href="/c">Deploy</a></li></ul>
+  </div>
+  <main class="markdown-body">
+    <h1>Managing context</h1>
+    <p>Context is the working memory an agent carries into each step, and it is finite, so the job of the harness is to decide what stays and what gets dropped before the next request is sent.</p>
+    <p>A common pattern is a rolling summary that keeps decisions and open errors while discarding the raw transcript of tool output that has already been acted on by the agent.</p>
+    <pre><code>context = trim(history, keep=["task", "diff", "error"])</code></pre>
+    <p>If the summariser is allowed to invent details, the agent will trust them, so the summary should quote the original text rather than paraphrase the requirements it claims to remember.</p>
+    <div class="advert">Buy our course on agent engineering today.</div>
+  </main>
+</body>
+</html>
