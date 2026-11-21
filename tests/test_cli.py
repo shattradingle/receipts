@@ -5,6 +5,8 @@ import json
 
 import pytest
 
+from receipts import __version__
+
 from receipts.cli import main
 from receipts.store import Store
 
@@ -23,7 +25,7 @@ def test_version(capsys):
     with pytest.raises(SystemExit) as excinfo:
         main(["--version"])
     assert excinfo.value.code == 0
-    assert "receipts 1.0.0" in capsys.readouterr().out
+    assert f"receipts {__version__}" in capsys.readouterr().out
 
 
 def test_help_exits_zero(capsys):

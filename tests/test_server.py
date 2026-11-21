@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+
+from receipts import __version__
 import threading
 import time
 from urllib.error import HTTPError
@@ -165,7 +167,7 @@ def test_config(store):
         status, headers, body = http(base + "/api/config")
         payload = json.loads(body)
         assert payload["demo"] is False
-        assert payload["version"] == "1.0.0"
+        assert payload["version"] == __version__
         assert set(payload["sources"]) == {"web", "news", "hn", "wiki", "arxiv", "reddit"}
     finally:
         stop(server, thread)
